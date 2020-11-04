@@ -17,7 +17,14 @@ const char* password = "h0w3S0undV13w";
 //const char* ssid     = "ferginzeys";
 //const char* password = "m0unta1nS1d3!";
 
+const char* quote = "%22";
+const char* openBrace = "%7b";
+const char* closeBrace = "%7d";
+
 const char* host = "wifitest.adafruit.com";
+String envPublishHost = "192.168.102.110";
+String envPublishUrl = "/homeServer/recordEnv.py/logEnv?envJson=%20";
+String physicalLocation = "mechanical";
 
 ESP8266WebServer server;
 
@@ -30,6 +37,7 @@ ESP8266WebServer server;
 #define SEALEVELPRESSURE_HPA (1013.25)
 
 unsigned long delayTime;
+unsigned long sendEnvDelayTime;
 
 Adafruit_BME280 bme; // I2C
 
@@ -63,20 +71,26 @@ void setup() {
   Serial.print("Gateway: ");
   Serial.println(WiFi.gatewayIP());
 
-  server.on("/", [](){server.send(200, "text/plain", "Hello World!");});
+  server.on("/", [](){server.send(200, "text/plain", getHelpMessage());});
   Serial.println("Registered path: /");
 
-  server.on("/toggle", toggle);
+  server.on("/help", [](){server.send(200, "text/plain", getHelpMessage());});
+  Serial.println("Registered path: /help");
+
+  server.on("/toggle", relayToggle);
   Serial.println("Registered path: /toggle");
 
-  server.on("/on", ledOn);
+  server.on("/on", relayOn);
   Serial.println("Registered path: /on");
 
-  server.on("/off", ledOff);
+  server.on("/off", relayOff);
   Serial.println("Registered path: /off");
 
+  server.on("/updateConfig", updateConfig);
+  Serial.println("Registered path: /updateConfig");
+
   server.begin();
-  Serial.print("Server started!");
+  Serial.print("Server started!\n");
 
   // BME
     unsigned status;
@@ -96,15 +110,18 @@ void setup() {
         while (1) delay(10);
     }
 
-    Serial.println("-- Default Test --");
+    Serial.println(getHelpMessage());
     delayTime = 1000;
+    sendEnvDelayTime = 5000;
 
+    relayOff();
     Serial.println();
   // END BME
 }
 
 int value = 0;
 unsigned long lastPrinted = 0;
+unsigned long lastEnvSent = 0;
 
 void loop() {
    server.handleClient();
@@ -112,7 +129,12 @@ void loop() {
       printEnv();
       lastPrinted = millis();
    }
-   
+
+   if ((millis() - lastEnvSent) > sendEnvDelayTime) {
+      sendEnv();
+      lastEnvSent = millis();
+   }
+
 /*
   delay(5000);
   ++value;
@@ -160,7 +182,7 @@ void setLedState(uint8_t newState) {
   Serial.println("Pin Relay: "+String(digitalRead(pin_relay)));
 }
 
-void toggle() {
+void relayToggle() {
   setLedState(!digitalRead(pin_led));
   /*
   digitalWrite(pin_led, !digitalRead(pin_led));
@@ -168,12 +190,101 @@ void toggle() {
   */
 }
 
-void ledOff() {
+void relayOff() {
   setLedState(1);
 }
 
-void ledOn() {
+void relayOn() {
   setLedState(0);
+}
+
+void updateConfig() {
+  Serial.println(server.args());
+  String message = "";
+  for (short i = 0; i < server.args(); i++)
+  {
+     Serial.print(server.argName(i));
+     Serial.print(" : ");
+     Serial.println(server.arg(i));
+  }
+  if (server.hasArg("envPublishHost"))
+  {
+      envPublishHost = server.arg("envPublishHost");
+      message = message+"Set envPublishHost to "+envPublishHost+"\n";
+  }
+  if (server.hasArg("envPublishUrl"))
+  {
+      envPublishUrl = server.arg("envPublishUrl");
+      message = message+"Set envPublishUrl to "+envPublishUrl+"\n";
+  }
+  if (server.hasArg("physicalLocation"))
+  {
+      physicalLocation = server.arg("physicalLocation");
+      message = message+"Set physicalLocation to "+physicalLocation+"\n";
+  }
+  server.send(200, "text/plain", message);
+}
+
+void sendEnv() {
+  // Use WiFiClient class to create TCP connections
+  WiFiClient client;
+
+  Serial.print("Trying to send to ");
+  Serial.println(envPublishHost);
+  Serial.println(envPublishUrl);
+  const int httpPort = 80;
+  if (!client.connect(envPublishHost, httpPort)) {
+    Serial.println("Connection failed :(");
+    return;
+  }
+  else
+  {
+    Serial.println("Connected!");
+  }
+  String url = envPublishUrl + getEnvJson();
+  Serial.println("Sending url "+url);
+
+    client.print(String("GET ") + url + " HTTP/1.1\r\n" +
+                 "Host: " + envPublishHost + "\r\n" +
+                 "Connection: close\r\n\r\n");
+    delay(500);
+
+    Serial.println("Before read...");
+    // Read all the lines of the reply from server and print them to Serial
+    while(client.available()){
+      String line = client.readStringUntil('\r');
+      Serial.print(line);
+    }
+    Serial.println("After read...");
+    Serial.println();
+    Serial.println("closing connection");
+}
+
+String getEnvJson() {
+return openBrace
+   +wrap("location")+":"+quote+physicalLocation+quote
+   +","+wrap("temp")+":"+String(bme.readTemperature())
+   +","+wrap("humidity")+":"+String(bme.readHumidity())
+   +","+wrap("pressure")+":"+String(bme.readPressure()/100.0F)
+   +","+wrap("alt")+":"+String(bme.readAltitude(SEALEVELPRESSURE_HPA))
+   +closeBrace;
+}
+String wrap(String text)
+{
+   return quote+text+quote;
+}
+
+String getHelpMessage() {
+  return String("Usage: \n")+
+  "/toggle       : Toggles relay on or off\n"+
+  "/on           : Turns relay on\n"+
+  "/off          : Turns relay off\n"+
+  "/updateConfig : Update config variables. Variables include:\n"+
+  "                physicalLocation : Description of location sent to server\n"+
+  "                envPublishHost   : Host name to publish to\n"+
+  "                envPublishUrl    : URL to publish to\n"+
+  "                eg: /updateConfig?physicalLocation=mech_rm&envPublishHost=192.168.102.110\n";
+
 }
 
 void printEnv() {
