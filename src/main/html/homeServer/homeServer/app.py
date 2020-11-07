@@ -1,12 +1,14 @@
 from flask import request
-from flask import Flask
+from flask import Flask, render_template
 from flask import Response
-import os
-import json
-from datetime import datetime
+from homeServer.HomeServerDao import HomeServerDao
+import simplejson as json
+import datetime
+import decimal
 app = Flask(__name__)
 app.debug = True
 app.filename = "/var/www/html/log/environment.log"
+
 #app.run(debug=True,host="0.0.0.0")
 def verify_token(password):
     passw = 'thisisourtoken'
@@ -14,6 +16,10 @@ def verify_token(password):
         return True
 
     return False
+
+@app.route('/')
+def showHomePage():
+    return render_template("home.html", ip="192.168.102.124")
 
 @app.route('/inventory')
 def getinventory():
@@ -29,28 +35,34 @@ def getinventory():
 @app.route('/logEnv')
 def logEnv():
     obj = json.loads(request.args.get('envJson'))
-    obj['date'] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    file1 = open(app.filename, "a")
-    file1.write(json.dumps(obj))
-    file1.write("\n")
-    file1.close();
+    obj['date'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+#    file1 = open(app.filename, "a")
+#    file1.write(json.dumps(obj))
+#    file1.write("\n")
+#    file1.close();
     obj['status']="success"
     resp = Response(response=json.dumps(obj),
                     status=200,
                     mimetype="application/json")
+    dao = HomeServerDao()
+    dao.saveEnvironmentLog(obj)
+
     return resp
 
 @app.route('/readEnv')
 def readEnv():
-    with open(app.filename, 'rb') as f:
-        f.seek(-2, os.SEEK_END)
-        while f.read(1) != b'\n':
-            f.seek(-2, os.SEEK_CUR)
-        last_line = f.readline().decode()
-        resp = Response(response=last_line,
-                        status=200,
-                        mimetype="application/json")
-        return resp
+    dao = HomeServerDao()
+    last_log = dao.getLastEnvironmentLog()
+    #response_body = dict(map(lambda x: (x[0], convert_value(x[1])), last_log.items() ))
+    return render_template("menu.html", latest_env=last_log, env_summary=dao.getEnvironmentLogSummary())
+
+
+def convert_value(value):
+    if isinstance(value, (datetime.datetime, datetime.date, datetime.time)):
+        return value.isoformat()
+    if isinstance(value, (decimal.Decimal)):
+        return float(value)
+    return value
 
 if __name__ == "__main__":
     app.run(host='0.0.0.0',port=5000)

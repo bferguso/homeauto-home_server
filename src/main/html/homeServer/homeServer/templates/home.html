@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Ferginzeys' Home - Main Menu</title>
+    <!-- Latest compiled and minified CSS -->
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="b{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-theme.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ferginzey.css') }}"/>
+
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
+    <script>
+        //var ipAddress = "{{ ip }}";
+        var ipAddress = "192.168.102.124";
+        $().ready(function() {
+            $("#sensorIp").text(ipAddress);
+
+        });
+        var updateSensorLocation = function()
+        {
+            var newLocation = $("#sensorLocationText").val();
+            $.ajax({
+                method: "GET",
+                url: "http://"+ipAddress+"/updateConfig?physicalLocation="+newLocation,
+                success: function (msg) {
+                    console.log(msg);
+                    $("#resultMessage").text(msg);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.log("Ajax call failed: " + textStatus + ": " + errorThrown);
+                    alert("Unable to update location.");
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+<div class="ferginzey_title">Ferginzeys' Home Data</div>
+<a href="/homeServer/readEnv">Enviornment Summary</a>
+<form>
+    <div id="resultMessage" class="alert-success"></div>
+    <label for="sensorLocationText">Sensor Location <span id="sensorIp"></span></label>
+    <input id="sensorLocationText" type="text" value="mechanical"/>
+    <button class="btn btn-link" onclick="updateSensorLocation(); return false;" value="Update Location"><span class="glyphicon glyphicon-refresh"></span></button>
+</form>
+</body>
+</html>

@@ -1,0 +1,20 @@
+body {
+    color: #333;
+    padding-left: 100px;
+}
+
+div.number {
+    text-align: right;
+}
+
+div.latest_reading {
+    background: lightgrey;
+}
+
+div.ferginzey_title {
+    padding-top: 10px;
+    padding-bottom: 5px;
+    font-size: larger;
+    font-weight: bold;
+    color: #333;
+}
