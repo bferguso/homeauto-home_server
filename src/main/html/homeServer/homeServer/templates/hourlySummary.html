@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <title>Ferginzeys' Home - Environment Data</title>
+    <title>Ferginzeys' Home - Hourly Environment Data</title>
     <!-- Latest compiled and minified CSS -->
     <link rel="stylesheet" href="b{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <!-- Optional theme -->
@@ -11,10 +11,19 @@
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
     <!-- Latest compiled and minified JavaScript -->
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
+    <!-- Frappe chart -->
+    <script type="module" src="https://unpkg.com/xtal-json-editor@0.0.39/xtal-json-editor.js?module"></script>
+    <script type="module" src="https://unpkg.com/p-et-alia@0.0.47/p-et-alia.js?module"></script>
+    <script type="module" src="https://unpkg.com/xtal-json-merge@0.2.37/xtal-json-merge.js?module"></script>
+    <script type="module" src="https://unpkg.com/xtal-frappe-chart@0.0.44/xtal-frappe-chart.js?module"></script>
 </head>
 <body>
-<div class="ferginzey_title">Ferginzeys' Home Data</div>
-<a href="/homeServer">Home page</a>
+<div class="ferginzey_title">Ferginzeys' Hourly Summary</div>
+<a href="/homeServer">Home page</a><br>
+<a href="/homeServer/dailySummary">Hourly Summary</a>
+<hr>
+
 <div class="table active" style="padding-left: 100px">
     <div class="row">
         <div class="col-sm-1 number">Location</div>
@@ -47,5 +56,38 @@
     {% endfor %}
     
 </div>
+<div>
+    <h3>Hourly Temperature Summary</h3>
+    <xtal-insert-json input="[]">
+        <script type="application/json">
+            [
+                {
+                    "title": "My Awesome Chart",
+                    "data": {
+                        "labels": [
+                            {% for envrow in env_summary %}{%if (loop.index0 != 0)%},{% endif %} "{{envrow.sample_timestamp.strftime('%H:%M')}}"{% endfor %}
+                        ],
+                        "datasets": [
+                            {
+                                "name": "Temp", "color": "light-blue", "type": "line",
+                                "values": [
+                                    {% for envrow in env_summary %}{%if (loop.index0 != 0)%},{% endif %} {{envrow.temperature}}{% endfor %}
+                                ]
+                            }
+                        ]
+                    },
+                    "type": "axis-mixed",
+                    "height": 250,
+                    "isNavigable": true
+                }
+            ]
+        </script>
+    </xtal-insert-json>
+    <p-d on="merged-prop-changed" prop="data" val="target.value"></p-d>
+    <xtal-frappe-chart></xtal-frappe-chart>
+    <p-d on="selected-element-changed" prop="input" val="target.value"></p-d>
+    <xtal-json-editor options="{}" height="300px"></xtal-json-editor>
+</div>
+
 </body>
 </html>

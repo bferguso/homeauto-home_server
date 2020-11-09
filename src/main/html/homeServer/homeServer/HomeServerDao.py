@@ -47,3 +47,25 @@ class HomeServerDao:
         cur.close()
         conn.close()
         return logs
+
+    def getEnvironmentDailyLogSummary(self):
+        conn = psycopg2.connect("dbname="+self.database+" user="+self.user+" password="+self.password)
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cur.execute("""
+            select sensor_location,
+               date_trunc('day', sample_timestamp) sample_timestamp, 
+               count(*) reading_count,
+               round(min(temperature),2) min_temperature,
+               round(max(temperature),2) max_temperature,
+               round(min(humidity),2) min_humidity,
+               round(max(humidity),2) max_humidity,
+               round(min(pressure),2) min_pressure,
+               round(max(pressure),2) max_pressure
+            from ha_environment_log
+            where sample_timestamp > date_trunc('day', (current_timestamp - INTERVAL '5 day'))
+            group by sensor_location, date_trunc('day', sample_timestamp) order by sample_timestamp desc, sensor_location;
+        """)
+        logs = cur.fetchall()
+        cur.close()
+        conn.close()
+        return logs

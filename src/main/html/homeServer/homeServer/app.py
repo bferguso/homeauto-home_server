@@ -49,12 +49,17 @@ def logEnv():
 
     return resp
 
-@app.route('/readEnv')
+@app.route('/hourlySummary')
 def readEnv():
     dao = HomeServerDao()
     last_log = dao.getLastEnvironmentLog()
     #response_body = dict(map(lambda x: (x[0], convert_value(x[1])), last_log.items() ))
-    return render_template("menu.html", latest_env=last_log, env_summary=dao.getEnvironmentLogSummary())
+    return render_template("hourlySummary.html", latest_env=last_log, env_summary=dao.getEnvironmentLogSummary())
+
+@app.route('/dailySummary')
+def dailySummary():
+    dao = HomeServerDao()
+    return render_template("dailySummary.html", env_summary=dao.getEnvironmentDailyLogSummary())
 
 
 def convert_value(value):
