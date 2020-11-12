@@ -177,6 +177,7 @@ void loop() {
 void setLedState(uint8_t newState) {
   digitalWrite(pin_led, newState);
   digitalWrite(pin_relay, newState);
+  server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, "text/plain", "Toggled to "+String(digitalRead(pin_led))+"\n");
   Serial.println("Pin LED: "+String(digitalRead(pin_led)));
   Serial.println("Pin Relay: "+String(digitalRead(pin_relay)));
@@ -222,6 +223,7 @@ void updateConfig() {
       physicalLocation = server.arg("physicalLocation");
       message = message+"Set physicalLocation to "+physicalLocation+"\n";
   }
+  server.sendHeader("Access-Control-Allow-Origin", "*");
   server.send(200, "text/plain", message);
 }
 
