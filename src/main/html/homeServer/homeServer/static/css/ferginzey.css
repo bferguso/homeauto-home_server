@@ -18,3 +18,21 @@ div.ferginzey_title {
     font-weight: bold;
     color: #333;
 }
+
+div.env_reading_title {
+    font-weight: bold;
+}
+
+div.env_reading {
+    margin-left: 15px;
+}
+
+div.env_title {
+    display: inline-block;
+    font-weight: bold;
+    min-width: 90px;
+}
+
+div.env_value {
+    display: inline-block;
+}

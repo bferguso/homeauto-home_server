@@ -19,7 +19,9 @@ def verify_token(password):
 
 @app.route('/')
 def showHomePage():
-    return render_template("home.html", ip="192.168.102.124")
+    dao = HomeServerDao()
+    last_log = dao.getLastEnvironmentLog()
+    return render_template("home.html", ip="192.168.102.124", latest_env=last_log)
 
 @app.route('/inventory')
 def getinventory():

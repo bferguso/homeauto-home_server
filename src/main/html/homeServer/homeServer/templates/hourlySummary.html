@@ -3,7 +3,7 @@
 <head>
     <title>Ferginzeys' Home - Hourly Environment Data</title>
     <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="b{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <!-- Optional theme -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-theme.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/ferginzey.css') }}"/>
@@ -11,6 +11,8 @@
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
     <!-- Latest compiled and minified JavaScript -->
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/ferginzey.js') }}"></script>
 
     <!-- Frappe chart -->
     <script type="module" src="https://unpkg.com/xtal-json-editor@0.0.39/xtal-json-editor.js?module"></script>
@@ -20,49 +22,18 @@
 </head>
 <body>
 <div class="ferginzey_title">Ferginzeys' Hourly Summary</div>
-<a href="/homeServer">Home page</a><br>
-<a href="/homeServer/dailySummary">Hourly Summary</a>
-<hr>
-
-<div class="table active" style="padding-left: 100px">
-    <div class="row">
-        <div class="col-sm-1 number">Location</div>
-        <div class="col-sm-2 number">Sample Time</div>
-        <div class="col-sm-1 number"># Samples</div>
-        <div class="col-sm-1 number">Temperature</div>
-        <div class="col-sm-1 number">Humidity</div>
-        <div class="col-sm-1 number">Pressure</div>
-        <div class="col-sm-1 number">Altitude</div>
-    </div>
-    <div class="row latest_reading">
-        <div class="col-sm-1 number">{{latest_env.sensor_location}}</div>
-        <div class="col-sm-2 number">{{latest_env.sample_timestamp}}</div>
-        <div class="col-sm-1 number">1</div>
-        <div class="col-sm-1 number">{{latest_env.temperature}}</div>
-        <div class="col-sm-1 number">{{latest_env.humidity}}%</div>
-        <div class="col-sm-1 number">{{latest_env.pressure}}</div>
-        <div class="col-sm-1 number">{{latest_env.altitude}}m</div>
-    </div>
-    {% for envrow in env_summary %}
-        <div class="row">
-            <div class="col-sm-1 number">{{envrow.sensor_location}}</div>
-            <div class="col-sm-2 number">{{envrow.sample_timestamp}}</div>
-            <div class="col-sm-1 number">{{envrow.reading_count}}</div>
-            <div class="col-sm-1 number">{{envrow.temperature}}</div>
-            <div class="col-sm-1 number">{{envrow.humidity}}%</div>
-            <div class="col-sm-1 number">{{envrow.pressure}}</div>
-            <div class="col-sm-1 number">{{envrow.altitude}}m</div>
-        </div>
-    {% endfor %}
-    
+<div class="nav_links">
+    <div class="nav_link"><a href="/homeServer/">Home Page</a></div>
+    <div class="nav_link"><a href="/homeServer/dailySummary">Daily Summary</a></div>
 </div>
+<hr>
 <div>
     <h3>Hourly Temperature Summary</h3>
     <xtal-insert-json input="[]">
         <script type="application/json">
             [
                 {
-                    "title": "My Awesome Chart",
+                    "title": "Hourly Temp Summary",
                     "data": {
                         "labels": [
                             {% for envrow in env_summary %}{%if (loop.index0 != 0)%},{% endif %} "{{envrow.sample_timestamp.strftime('%H:%M')}}"{% endfor %}
@@ -87,6 +58,40 @@
     <xtal-frappe-chart></xtal-frappe-chart>
     <p-d on="selected-element-changed" prop="input" val="target.value"></p-d>
     <xtal-json-editor options="{}" height="300px"></xtal-json-editor>
+</div>
+<hr>
+<a href="#" onclick="toggleVisibility('rawDataTable');">Show Data</a>
+<div id="rawDataTable" class="table active" style="padding-left: 100px; display: none;">
+    <div class="row">
+        <div class="col-sm-1 number">Location</div>
+        <div class="col-sm-2 number">Sample Time</div>
+        <div class="col-sm-1 number"># Samples</div>
+        <div class="col-sm-1 number">Temperature</div>
+        <div class="col-sm-1 number">Humidity</div>
+        <div class="col-sm-1 number">Pressure</div>
+        <div class="col-sm-1 number">Altitude</div>
+    </div>
+    <div class="row latest_reading">
+        <div class="col-sm-1 number">{{latest_env.sensor_location}}</div>
+        <div class="col-sm-2 number">{{latest_env.sample_timestamp}}</div>
+        <div class="col-sm-1 number">1</div>
+        <div class="col-sm-1 number">{{latest_env.temperature}}</div>
+        <div class="col-sm-1 number">{{latest_env.humidity}}%</div>
+        <div class="col-sm-1 number">{{latest_env.pressure}}</div>
+        <div class="col-sm-1 number">{{latest_env.altitude}}m</div>
+    </div>
+    {% for envrow in env_summary %}
+    <div class="row">
+        <div class="col-sm-1 number">{{envrow.sensor_location}}</div>
+        <div class="col-sm-2 number">{{envrow.sample_timestamp}}</div>
+        <div class="col-sm-1 number">{{envrow.reading_count}}</div>
+        <div class="col-sm-1 number">{{envrow.temperature}}</div>
+        <div class="col-sm-1 number">{{envrow.humidity}}%</div>
+        <div class="col-sm-1 number">{{envrow.pressure}}</div>
+        <div class="col-sm-1 number">{{envrow.altitude}}m</div>
+    </div>
+    {% endfor %}
+
 </div>
 
 </body>

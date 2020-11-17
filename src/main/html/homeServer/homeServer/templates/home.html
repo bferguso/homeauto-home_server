@@ -4,7 +4,7 @@
     <title>Ferginzeys' Home - Main Menu</title>
     <!-- Latest compiled and minified CSS -->
     <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="b{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <!-- Optional theme -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-theme.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/ferginzey.css') }}"/>
@@ -16,16 +16,15 @@
     <script>
         //var ipAddress = "{{ ip }}";
         var ipAddress = "192.168.102.124";
-        $().ready(function() {
+        $().ready(function () {
             $("#sensorIp").text(ipAddress);
 
         });
-        var updateSensorLocation = function()
-        {
+        var updateSensorLocation = function () {
             var newLocation = $("#sensorLocationText").val();
             $.ajax({
                 method: "GET",
-                url: "http://"+ipAddress+"/updateConfig?physicalLocation="+newLocation,
+                url: "http://" + ipAddress + "/updateConfig?physicalLocation=" + newLocation,
                 success: function (msg) {
                     console.log(msg);
                     $("#resultMessage").text(msg);
@@ -40,14 +39,32 @@
 </head>
 <body>
 <div class="ferginzey_title">Ferginzeys' Home Data</div>
-<a href="/homeServer/hourlySummary">Hourly Summary</a><br>
-<a href="/homeServer/dailySummary">Daily Summary</a>
+<div class="nav_links">
+    <div class="nav_link"><a href="/homeServer/hourlySummary">Hourly Summary</a></div>
+    <div class="nav_link"><a href="/homeServer/dailySummary">Daily Summary</a></div>
+</div>
+<hr>
+<div>Current Readings</div>
+<div class="env_reading_title">{{latest_env.sensor_location}} @ {{latest_env.sample_timestamp}}</div>
+<div class="env_reading">
+    <div class="env_title">Temperature</div>
+    <div class="env_value">{{latest_env.temperature}}</div>
+</div>
+<div class="env_reading">
+    <div class="env_title">Humidity</div>
+    <div class="env_value">{{latest_env.humidity}}%</div>
+</div>
+<div class="env_reading">
+    <div class="env_title">Pressure</div>
+    <div class="env_value">{{latest_env.pressure}}</div>
+</div>
 <hr>
 <form>
     <div id="resultMessage" class="alert-success"></div>
     <label for="sensorLocationText">Sensor Location <span id="sensorIp"></span></label>
     <input id="sensorLocationText" type="text" value="mechanical"/>
-    <button class="btn btn-link" onclick="updateSensorLocation(); return false;" value="Update Location"><span class="glyphicon glyphicon-refresh"></span></button>
+    <button class="btn btn-link" onclick="updateSensorLocation(); return false;" value="Update Location"><span
+            class="glyphicon glyphicon-refresh"></span></button>
 </form>
 </body>
 </html>

@@ -12,6 +12,8 @@
     <!-- Latest compiled and minified JavaScript -->
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
 
+    <script src="{{ url_for('static', filename='js/ferginzey.js') }}"></script>
+
     <!-- Frappe chart -->
     <script type="module" src="https://unpkg.com/xtal-json-editor@0.0.39/xtal-json-editor.js?module"></script>
     <script type="module" src="https://unpkg.com/p-et-alia@0.0.47/p-et-alia.js?module"></script>
@@ -20,39 +22,18 @@
 </head>
 <body>
 <div class="ferginzey_title">Ferginzeys' Daily Summary</div>
-<a href="/homeServer">Home page</a>
-<a href="/homeServer/hourlySummary">Hourly Summary</a>
-<div class="table active" style="padding-left: 100px">
-    <div class="row">
-        <div class="col-sm-1 number">Location</div>
-        <div class="col-sm-2 number">Date</div>
-        <div class="col-sm-1 number">Min Temp</div>
-        <div class="col-sm-1 number">Max Temp</div>
-        <div class="col-sm-1 number">Min Hum</div>
-        <div class="col-sm-1 number">Max Hum</div>
-        <div class="col-sm-1 number">Min Press</div>
-        <div class="col-sm-1 number">Max Press</div>
-    </div>
-    {% for envrow in env_summary %}
-        <div class="row">
-            <div class="col-sm-1 number">{{envrow.sensor_location}}</div>
-            <div class="col-sm-2 number">{{envrow.sample_timestamp.strftime('%Y-%m-%d')}}</div>
-            <div class="col-sm-1 number">{{envrow.min_temperature}}</div>
-            <div class="col-sm-1 number">{{envrow.max_temperature}}</div>
-            <div class="col-sm-1 number">{{envrow.min_humidity}}%</div>
-            <div class="col-sm-1 number">{{envrow.max_humidity}}%</div>
-            <div class="col-sm-1 number">{{envrow.min_pressure}}</div>
-            <div class="col-sm-1 number">{{envrow.max_pressure}}</div>
-        </div>
-    {% endfor %}
+<div class="nav_links">
+    <div class="nav_link"><a href="/homeServer/">Home Page</a></div>
+    <div class="nav_link"><a href="/homeServer/hourlySummary">Hourly Summary</a></div>
 </div>
+<hr>
 <div>
     <h3>Daily Temperature Summary</h3>
     <xtal-insert-json input="[]">
         <script type="application/json">
             [
                 {
-                    "title": "My Awesome Chart",
+                    "title": "Daily Temp summary",
                     "data": {
                         "labels": [
                             {% for envrow in env_summary %}{%if (loop.index0 != 0)%},{% endif %} "{{envrow.sample_timestamp.strftime('%Y-%m-%d')}}"{% endfor %}
@@ -84,6 +65,32 @@
     <xtal-frappe-chart></xtal-frappe-chart>
     <p-d on="selected-element-changed" prop="input" val="target.value"></p-d>
     <xtal-json-editor options="{}" height="300px"></xtal-json-editor>
+</div>
+<hr>
+<a href="#" onclick="toggleVisibility('rawDataTable');">Show Data</a>
+<div id="rawDataTable" class="table active" style="padding-left: 100px">
+    <div class="row">
+        <div class="col-sm-1 number">Location</div>
+        <div class="col-sm-2 number">Date</div>
+        <div class="col-sm-1 number">Min Temp</div>
+        <div class="col-sm-1 number">Max Temp</div>
+        <div class="col-sm-1 number">Min Hum</div>
+        <div class="col-sm-1 number">Max Hum</div>
+        <div class="col-sm-1 number">Min Press</div>
+        <div class="col-sm-1 number">Max Press</div>
+    </div>
+    {% for envrow in env_summary %}
+    <div class="row">
+        <div class="col-sm-1 number">{{envrow.sensor_location}}</div>
+        <div class="col-sm-2 number">{{envrow.sample_timestamp.strftime('%Y-%m-%d')}}</div>
+        <div class="col-sm-1 number">{{envrow.min_temperature}}</div>
+        <div class="col-sm-1 number">{{envrow.max_temperature}}</div>
+        <div class="col-sm-1 number">{{envrow.min_humidity}}%</div>
+        <div class="col-sm-1 number">{{envrow.max_humidity}}%</div>
+        <div class="col-sm-1 number">{{envrow.min_pressure}}</div>
+        <div class="col-sm-1 number">{{envrow.max_pressure}}</div>
+    </div>
+    {% endfor %}
 </div>
 </body>
 </html>
