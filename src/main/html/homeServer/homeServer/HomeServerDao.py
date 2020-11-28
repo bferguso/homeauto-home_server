@@ -41,7 +41,7 @@ class HomeServerDao:
                round(sum(altitude)/count(*),2) altitude
             from ha_environment_log
             where sample_timestamp > date_trunc('day', (current_timestamp - INTERVAL '1 day'))
-            group by sensor_location, date_trunc('hour', sample_timestamp) order by sample_timestamp desc, sensor_location;
+            group by sensor_location, date_trunc('hour', sample_timestamp) order by sample_timestamp, sensor_location;
         """)
         logs = cur.fetchall()
         cur.close()
@@ -62,8 +62,8 @@ class HomeServerDao:
                round(min(pressure),2) min_pressure,
                round(max(pressure),2) max_pressure
             from ha_environment_log
-            where sample_timestamp > date_trunc('day', (current_timestamp - INTERVAL '5 day'))
-            group by sensor_location, date_trunc('day', sample_timestamp) order by sample_timestamp desc, sensor_location;
+            where sample_timestamp > date_trunc('day', (current_timestamp - INTERVAL '14 day'))
+            group by sensor_location, date_trunc('day', sample_timestamp) order by sample_timestamp , sensor_location;
         """)
         logs = cur.fetchall()
         cur.close()

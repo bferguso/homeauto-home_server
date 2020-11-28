@@ -3,10 +3,11 @@
 <head>
     <title>Ferginzeys' Home - Daily Environment Data</title>
     <!-- Latest compiled and minified CSS -->
-    <link rel="stylesheet" href="b{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
     <!-- Optional theme -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-theme.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/ferginzey.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/Chart.min.css') }}"/>
 
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
     <!-- Latest compiled and minified JavaScript -->
@@ -14,11 +15,60 @@
 
     <script src="{{ url_for('static', filename='js/ferginzey.js') }}"></script>
 
-    <!-- Frappe chart -->
-    <script type="module" src="https://unpkg.com/xtal-json-editor@0.0.39/xtal-json-editor.js?module"></script>
-    <script type="module" src="https://unpkg.com/p-et-alia@0.0.47/p-et-alia.js?module"></script>
-    <script type="module" src="https://unpkg.com/xtal-json-merge@0.2.37/xtal-json-merge.js?module"></script>
-    <script type="module" src="https://unpkg.com/xtal-frappe-chart@0.0.44/xtal-frappe-chart.js?module"></script>
+    <!-- ChartJS -->
+    <script src="{{ url_for('static', filename='js/Chart.bundle.min.js') }}"></script>
+    <script>
+
+        $().ready(function (){
+            var ctx = $('#myChart');
+            var myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: [ {% for envrow in env_summary %}{%if (loop.index0 != 0)%},{% endif %} "{{envrow.sample_timestamp.strftime('%Y-%m-%d')}}"{% endfor %} ],
+            datasets: [
+                {
+                    label: 'Min Temp',
+                    data: [
+                        {% for envrow in env_summary %}{%if (loop.index0 != 0)%},{% endif %} {{envrow.min_temperature}}{% endfor %}
+                      ],
+            borderWidth: 1,
+                fill: false,
+                borderColor: "rgba(100, 190, 100, .4)",
+                yAxisID: 'temperature-y-axis'
+
+
+        },
+            {
+                label: 'Humidity',
+                    data: [
+                {% for envrow in env_summary %}{%if (loop.index0 != 0)%},{% endif %} {{envrow.max_temperature}}{% endfor %}
+            ],
+                borderWidth: 1,
+                    fill: false,
+                borderColor: "rgba(231, 84, 0, .4)",
+                yAxisID: 'temperature-y-axis'
+
+            }
+        ]
+        },
+            options: {
+                scales: {
+                    yAxes: [
+                        {
+                            id: 'temperature-y-axis',
+                            ticks: {
+                                suggestedMin: 10,
+                                suggestedMax: 50,
+                                // beginAtZero: true
+                            }
+                        }
+                    ]
+                }
+            }
+        });
+        });
+    </script>
+
 </head>
 <body>
 <div class="ferginzey_title">Ferginzeys' Daily Summary</div>
@@ -29,46 +79,11 @@
 <hr>
 <div>
     <h3>Daily Temperature Summary</h3>
-    <xtal-insert-json input="[]">
-        <script type="application/json">
-            [
-                {
-                    "title": "Daily Temp summary",
-                    "data": {
-                        "labels": [
-                            {% for envrow in env_summary %}{%if (loop.index0 != 0)%},{% endif %} "{{envrow.sample_timestamp.strftime('%Y-%m-%d')}}"{% endfor %}
-                        ],
-
-                        "datasets": [
-                            {
-                                "name": "Min Temp", "color": "light-blue",
-                                "values": [
-                                    {% for envrow in env_summary %}{%if (loop.index0 != 0)%},{% endif %} {{envrow.min_temperature}}{% endfor %}
-                                ]
-                            },
-                            {
-                                "name": "Max Temp", "color": "red",
-                                "values": [
-                                    {% for envrow in env_summary %}{%if (loop.index0 != 0)%},{% endif %} {{envrow.max_temperature}}{% endfor %}
-                                ]
-                            }
-                        ]
-                    },
-                    "type": "line",
-                    "height": 250,
-                    "isNavigable": true
-                }
-            ]
-        </script>
-    </xtal-insert-json>
-    <p-d on="merged-prop-changed" prop="data" val="target.value"></p-d>
-    <xtal-frappe-chart></xtal-frappe-chart>
-    <p-d on="selected-element-changed" prop="input" val="target.value"></p-d>
-    <xtal-json-editor options="{}" height="300px"></xtal-json-editor>
+    <canvas id="myChart" width="400" height="250"></canvas>
 </div>
 <hr>
 <a href="#" onclick="toggleVisibility('rawDataTable');">Show Data</a>
-<div id="rawDataTable" class="table active" style="padding-left: 100px">
+<div id="rawDataTable" class="table active" style="padding-left: 100px; display: none;">
     <div class="row">
         <div class="col-sm-1 number">Location</div>
         <div class="col-sm-2 number">Date</div>
