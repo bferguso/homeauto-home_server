@@ -22,7 +22,7 @@ const char* openBrace = "%7b";
 const char* closeBrace = "%7d";
 
 const char* host = "wifitest.adafruit.com";
-String envPublishHost = "192.168.102.128";
+String envPublishHost = "192.168.102.178";
 String envPublishUrl = "/homeServer/logEnv?envJson=";
 String physicalLocation = "mechanical";
 

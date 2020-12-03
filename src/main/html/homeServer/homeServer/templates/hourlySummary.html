@@ -25,42 +25,45 @@
         var myChart = new Chart(ctx, {
             type: 'line',
             data: {
-                labels: [ {% for envrow in env_summary %}{%if (loop.index0 != 0)%},{% endif %} "{{envrow.sample_timestamp.strftime('%H:%M')}}"{% endfor %} ],
+                labels: [ {% for time in times%}{%if (loop.index0 != 0)%},{% endif %} "{{time['sample_timestamp'].strftime('%H:%M')}}"{% endfor %} ],
                 datasets: [
+                    {% for location in env_summary %}
                     {
-                    label: 'Temperature',
+                    label: '{{location}} Temp',
                     data: [
-                        {% for envrow in env_summary %}{%if (loop.index0 != 0)%},{% endif %} {{envrow.temperature}}{% endfor %}
+                        {% for time in times%}{%if time.sample_timestamp < env_summary[location][0].sample_timestamp %}, {% endif %}{% endfor %}
+                        {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %}  {{envrow.temperature}} {% endfor %}
                     ],
                     borderWidth: 1,
                     fill: false,
                     borderColor: "rgba(231, 84, 0, .4)",
                     yAxisID: 'temperature-y-axis'
-
-                
-                },
+                    },
             {
-                label: 'Humidity',
+                label: '{{location}} Humidity',
                     data: [
-                       {% for envrow in env_summary %}{%if (loop.index0 != 0)%},{% endif %} {{envrow.humidity}}{% endfor %}
+                      {% for time in times%}{%if time.sample_timestamp < env_summary[location][0].sample_timestamp %}, {% endif %}{% endfor %}
+                      {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %} {{envrow.humidity}}{% endfor %}
                     ],
                     borderWidth: 1,
                     fill: false,
                     borderColor: "rgba(100, 190, 100, .4)",
                     yAxisID: 'humidity-y-axis'
-
             },
+            {% if (env_summary[location]| map(attribute='pressure') | unique | list ) != [0.0] %}
             {
-                label: 'Pressure',
+                label: '{{ location }} Pressure',
                     data: [
-                {% for envrow in env_summary %}{%if (loop.index0 != 0)%},{% endif %} {{envrow.pressure}}{% endfor %}
+                {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %} {{envrow.pressure}}{% endfor %}
             ],
                 borderWidth: 1,
                     fill: false,
                 borderColor: "rgba(0, 0, 0, .4)",
                 yAxisID: 'pressure-y-axis'
 
-            }
+            },
+            {% endif %}
+            {%endfor%}
         ]
         },
             options: {
@@ -121,16 +124,8 @@
         <div class="col-sm-1 number">Pressure</div>
         <div class="col-sm-1 number">Altitude</div>
     </div>
-    <div class="row latest_reading">
-        <div class="col-sm-1 number">{{latest_env.sensor_location}}</div>
-        <div class="col-sm-2 number">{{latest_env.sample_timestamp}}</div>
-        <div class="col-sm-1 number">1</div>
-        <div class="col-sm-1 number">{{latest_env.temperature}}</div>
-        <div class="col-sm-1 number">{{latest_env.humidity}}%</div>
-        <div class="col-sm-1 number">{{latest_env.pressure}}</div>
-        <div class="col-sm-1 number">{{latest_env.altitude}}m</div>
-    </div>
-    {% for envrow in env_summary %}
+    {% for location in env_summary %}
+    {% for envrow in env_summary[location] %}
     <div class="row">
         <div class="col-sm-1 number">{{envrow.sensor_location}}</div>
         <div class="col-sm-2 number">{{envrow.sample_timestamp}}</div>
@@ -141,8 +136,17 @@
         <div class="col-sm-1 number">{{envrow.altitude}}m</div>
     </div>
     {% endfor %}
+    {% endfor %}
+    <div class="row latest_reading">
+        <div class="col-sm-1 number">{{latest_env.sensor_location}}</div>
+        <div class="col-sm-2 number">{{latest_env.sample_timestamp}}</div>
+        <div class="col-sm-1 number">1</div>
+        <div class="col-sm-1 number">{{latest_env.temperature}}</div>
+        <div class="col-sm-1 number">{{latest_env.humidity}}%</div>
+        <div class="col-sm-1 number">{{latest_env.pressure}}</div>
+        <div class="col-sm-1 number">{{latest_env.altitude}}m</div>
+    </div>
 
 </div>
-
 </body>
 </html>
