@@ -58,8 +58,9 @@ def readEnv():
     locations = dao.getLocationsInPeriod()
     last_log = dao.getLastEnvironmentLog()
     env_summary = {}
+    print (locations)
     for location in locations:
-        env_summary[location['sensor_location']] = dao.getEnvironmentLogSummary(location)
+        env_summary[location['sensor_location']] = dao.getEnvironmentLogSummary(location[0])
     return render_template("hourlySummary.html", latest_env=last_log, locations=locations, times=times, env_summary=env_summary)
 
 @app.route('/dailySummary')

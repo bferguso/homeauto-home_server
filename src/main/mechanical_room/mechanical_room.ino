@@ -25,7 +25,7 @@ const char* host = "wifitest.adafruit.com";
 //String envPublishHost = "192.168.102.178";
 String envPublishHost = "cabin.local";
 String envPublishUrl = "/homeServer/logEnv?envJson=";
-String physicalLocation = "mechanical";
+String physicalLocation = "office";
 
 ESP8266WebServer server;
 
@@ -113,7 +113,7 @@ void setup() {
 
     Serial.println(getHelpMessage());
     delayTime = 1000;
-    sendEnvDelayTime = 5000;
+    sendEnvDelayTime = 15000;
 
     relayOff();
     Serial.println();

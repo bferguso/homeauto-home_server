@@ -66,18 +66,33 @@ class HomeServerDao:
         conn = self.get_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cur.execute("""
-            select sensor_location,
+        with all_hours as ( select distinct date_trunc('hour', sample_timestamp) sample_timestamp
+                    from ha_environment_log
+                    where sample_timestamp > date_trunc('day', (current_timestamp - INTERVAL '1 day'))
+                    order by sample_timestamp),
+         env_data as (
+             select sensor_location,
                date_trunc('hour', sample_timestamp) sample_timestamp, 
                count(*) reading_count,
                round(sum(temperature)/count(*),2) temperature,
                round(sum(humidity)/count(*),2) humidity,
                round(sum(pressure)/count(*),2) pressure,
-               round(sum(altitude)/count(*),2) altitude
-            from ha_environment_log
-            where  sensor_location = %s
-                  and sample_timestamp > date_trunc('day', (current_timestamp - INTERVAL '1 day'))
-            group by sensor_location, date_trunc('hour', sample_timestamp) order by sample_timestamp, sensor_location;
-        """, location)
+               round(sum(altitude)/count(*),2) altitude 
+         from ha_environment_log
+         where  sensor_location = %(location)s 
+         and ha_environment_log.sample_timestamp  > date_trunc('day', (current_timestamp - INTERVAL '1 day'))
+         group by sensor_location, date_trunc('hour', sample_timestamp)
+         order by sensor_location, date_trunc('hour', sample_timestamp)) 
+            select  all_hours.sample_timestamp,
+                        %(location)s sensor_location,
+                        env_data.reading_count,
+                        env_data.temperature,
+                        env_data.humidity,
+                        env_data.pressure,
+                        env_data.altitude
+                        from all_hours
+                         FULL OUTER JOIN env_data  ON  env_data.sample_timestamp = all_hours.sample_timestamp;
+        """, {'location': location})
         logs = cur.fetchall()
         cur.close()
         conn.close()

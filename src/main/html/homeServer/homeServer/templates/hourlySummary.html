@@ -31,8 +31,7 @@
                     {
                     label: '{{location}} Temp',
                     data: [
-                        {% for time in times%}{%if time.sample_timestamp < env_summary[location][0].sample_timestamp %}, {% endif %}{% endfor %}
-                        {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %}  {{envrow.temperature}} {% endfor %}
+                        {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %}  {%if envrow.temperature is not none %} {{envrow.temperature}} {% endif %} {% endfor %}
                     ],
                     borderWidth: 1,
                     fill: false,
@@ -42,8 +41,7 @@
             {
                 label: '{{location}} Humidity',
                     data: [
-                      {% for time in times%}{%if time.sample_timestamp < env_summary[location][0].sample_timestamp %}, {% endif %}{% endfor %}
-                      {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %} {{envrow.humidity}}{% endfor %}
+                      {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %} {%if envrow.humidity is not none %} {{envrow.humidity}}{% endif %}{% endfor %}
                     ],
                     borderWidth: 1,
                     fill: false,
@@ -54,7 +52,7 @@
             {
                 label: '{{ location }} Pressure',
                     data: [
-                {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %} {{envrow.pressure}}{% endfor %}
+                {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %} {%if envrow.humidity is not none %}{{envrow.pressure}}{% endif %}{% endfor %}
             ],
                 borderWidth: 1,
                     fill: false,
