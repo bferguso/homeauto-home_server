@@ -48,6 +48,20 @@ class HomeServerDao:
         conn.close()
         return times
 
+    def getDailyTimes(self):
+        conn = self.get_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cur.execute("""
+            select distinct date_trunc('day', sample_timestamp) sample_timestamp
+                from ha_environment_log
+                where sample_timestamp > date_trunc('day', (current_timestamp - INTERVAL '14 day'))
+                order by sample_timestamp;
+                """)
+        times = cur.fetchall()
+        cur.close()
+        conn.close()
+        return times
+
     def getLocationsInPeriod(self):
         conn = self.get_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
@@ -98,10 +112,16 @@ class HomeServerDao:
         conn.close()
         return logs
 
-    def getEnvironmentDailyLogSummary(self):
+    def getEnvironmentDailyLogSummary(self, location):
         conn = self.get_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cur.execute("""
+            with all_days as (
+            select distinct date_trunc('day', sample_timestamp) sample_timestamp
+                from ha_environment_log
+                where sample_timestamp > date_trunc('day', (current_timestamp - INTERVAL '14 day'))
+                order by sample_timestamp),
+     env_data as (                
             select sensor_location,
                date_trunc('day', sample_timestamp) sample_timestamp, 
                count(*) reading_count,
@@ -116,8 +136,17 @@ class HomeServerDao:
                round(avg(pressure),2) avg_pressure
             from ha_environment_log
             where sample_timestamp > date_trunc('day', (current_timestamp - INTERVAL '14 day'))
-            group by sensor_location, date_trunc('day', sample_timestamp) order by sample_timestamp , sensor_location;
-        """)
+            and sensor_location = %(location)s
+            group by sensor_location, date_trunc('day', sample_timestamp) order by sample_timestamp , sensor_location)
+    select all_days.sample_timestamp,
+           %(location)s sensor_location,
+           reading_count,
+           min_temperature, max_temperature, avg_temperature,
+           min_humidity, max_humidity, avg_humidity,
+           min_pressure, max_pressure, avg_pressure
+        from all_days
+        FULL OUTER JOIN env_data  ON  env_data.sample_timestamp = all_days.sample_timestamp;
+        """, {'location': location})
         logs = cur.fetchall()
         cur.close()
         conn.close()

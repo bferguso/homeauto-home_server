@@ -24,31 +24,46 @@
             var myChart = new Chart(ctx, {
                 type: 'line',
                 data: {
-                    labels: [ {% for envrow in env_summary %}{%if (loop.index0 != 0)%},{% endif %} "{{envrow.sample_timestamp.strftime('%Y-%m-%d')}}"{% endfor %} ],
+                    labels: [ {% for time in times%}{%if (loop.index0 != 0)%},{% endif %} "{{time['sample_timestamp'].strftime('%Y-%m-%d')}}"{% endfor %} ],
             datasets: [
+                {% for location in env_summary %}
                 {
-                    label: 'Min Temp',
-                    data: [
-                        {% for envrow in env_summary %}{%if (loop.index0 != 0)%},{% endif %} {{envrow.min_temperature}}{% endfor %}
-                      ],
-            borderWidth: 1,
-                fill: false,
-                borderColor: "rgba(100, 190, 100, .4)",
-                yAxisID: 'temperature-y-axis'
-
-
-        },
-            {
-                label: 'Humidity',
-                    data: [
-                {% for envrow in env_summary %}{%if (loop.index0 != 0)%},{% endif %} {{envrow.max_temperature}}{% endfor %}
-            ],
-                borderWidth: 1,
+                    label: '{{location}} Min Temp',
+                    data: [ {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %}  {%if envrow.min_temperature is not none %} {{envrow.min_temperature}} {% endif %} {% endfor %} ],
+                    borderWidth: 1,
                     fill: false,
-                borderColor: "rgba(231, 84, 0, .4)",
-                yAxisID: 'temperature-y-axis'
-
-            }
+                    pointStyle: getPointStyle('{{location}}'),
+                    borderColor: "rgba(100, 190, 100, .4)",
+                    yAxisID: 'temperature-y-axis'
+                },
+                {
+                    label: '{{location}} Max Temp',
+                    data: [ {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %} {%if envrow.max_temperature is not none %} {{envrow.max_temperature}}{% endif %}{% endfor %} ],
+                    borderWidth: 1,
+                    fill: false,
+                    pointStyle: getPointStyle('{{location}}'),
+                    borderColor: "rgba(231, 84, 0, .4)",
+                    yAxisID: 'temperature-y-axis'
+                },
+            {
+                label: '{{location}} Min Humid',
+                    data: [ {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %}  {%if envrow.min_humidity is not none %} {{envrow.min_humidity}} {% endif %} {% endfor %} ],
+                borderWidth: 1,
+                fill: false,
+                pointStyle: getPointStyle('{{location}}'),
+                borderColor: "rgba(100, 190, 255, .4)",
+                yAxisID: 'humidity-y-axis'
+            },
+            {
+                label: '{{location}} Max Humid',
+                    data: [ {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %} {%if envrow.max_humidity is not none %} {{envrow.max_humidity}}{% endif %}{% endfor %} ],
+                borderWidth: 1,
+                fill: false,
+                pointStyle: getPointStyle('{{location}}'),
+                borderColor: "rgba(231, 84, 255, .4)",
+                yAxisID: 'humidity-y-axis'
+            },
+            {%endfor%}
         ]
         },
             options: {
@@ -59,6 +74,14 @@
                             ticks: {
                                 suggestedMin: 10,
                                 suggestedMax: 50,
+                                // beginAtZero: true
+                            }
+                        },
+                        {
+                            id: 'humidity-y-axis',
+                            ticks: {
+                                suggestedMin: 40,
+                                suggestedMax: 70,
                                 // beginAtZero: true
                             }
                         }
@@ -94,7 +117,8 @@
         <div class="col-sm-1 number">Min Press</div>
         <div class="col-sm-1 number">Max Press</div>
     </div>
-    {% for envrow in env_summary %}
+    {% for location in env_summary %}
+    {% for envrow in env_summary[location] %}
     <div class="row">
         <div class="col-sm-1 number">{{envrow.sensor_location}}</div>
         <div class="col-sm-2 number">{{envrow.sample_timestamp.strftime('%Y-%m-%d')}}</div>
@@ -105,6 +129,7 @@
         <div class="col-sm-1 number">{{envrow.min_pressure}}</div>
         <div class="col-sm-1 number">{{envrow.max_pressure}}</div>
     </div>
+    {% endfor %}
     {% endfor %}
 </div>
 </body>

@@ -10,3 +10,16 @@ var toggleVisibility = function(objectId)
         obj.show();
     }
 }
+
+var getPointStyle = function(location)
+{
+    if (location === 'office')
+    {
+        return 'circle'
+    }
+    else if (location === 'bedroom')
+    {
+        return 'triangle';
+    }
+    return 'rectangle';
+}

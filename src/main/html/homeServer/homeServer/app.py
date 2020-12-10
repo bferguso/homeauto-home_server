@@ -66,8 +66,12 @@ def readEnv():
 @app.route('/dailySummary')
 def dailySummary():
     dao = HomeServerDao()
-    return render_template("dailySummary.html", env_summary=dao.getEnvironmentDailyLogSummary())
-
+    times = dao.getDailyTimes()
+    locations = dao.getLocationsInPeriod()
+    env_summary = {}
+    for location in locations:
+        env_summary[location['sensor_location']] = dao.getEnvironmentDailyLogSummary(location[0])
+    return render_template("dailySummary.html", locations=locations, times=times, env_summary=env_summary)
 
 def convert_value(value):
     if isinstance(value, (datetime.datetime, datetime.date, datetime.time)):
