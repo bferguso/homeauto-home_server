@@ -17,52 +17,50 @@
 
     <!-- ChartJS -->
     <script src="{{ url_for('static', filename='js/Chart.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/Chart.ErrorBars.min.js') }}"></script>
     <script>
 
         $().ready(function (){
             var ctx = $('#myChart');
             var myChart = new Chart(ctx, {
-                type: 'line',
+                type: 'lineWithErrorBars',
                 data: {
                     labels: [ {% for time in times%}{%if (loop.index0 != 0)%},{% endif %} "{{time['sample_timestamp'].strftime('%Y-%m-%d')}}"{% endfor %} ],
             datasets: [
                 {% for location in env_summary %}
                 {
-                    label: '{{location}} Min Temp',
-                    data: [ {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %}  {%if envrow.min_temperature is not none %} {{envrow.min_temperature}} {% endif %} {% endfor %} ],
+                    label: '{{location}} Temp',
+                    data: [ {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %}  {%if envrow.avg_temperature is not none %} { "y": {{ envrow.avg_temperature}} , "yMin": {{envrow.min_temperature}} , "yMax": {{envrow.max_temperature}} } {% endif %} {% endfor %} ],
                     borderWidth: 1,
                     fill: false,
                     pointStyle: getPointStyle('{{location}}'),
                     borderColor: "rgba(100, 190, 100, .4)",
-                    yAxisID: 'temperature-y-axis'
-                },
-                {
-                    label: '{{location}} Max Temp',
-                    data: [ {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %} {%if envrow.max_temperature is not none %} {{envrow.max_temperature}}{% endif %}{% endfor %} ],
-                    borderWidth: 1,
-                    fill: false,
-                    pointStyle: getPointStyle('{{location}}'),
-                    borderColor: "rgba(231, 84, 0, .4)",
+                    errorBarColor: "rgba(100, 190, 100, .4)",
+                    errorBarWhiskerColor: "rgba(100, 190, 100, .4)",
                     yAxisID: 'temperature-y-axis'
                 },
             {
-                label: '{{location}} Min Humid',
-                    data: [ {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %}  {%if envrow.min_humidity is not none %} {{envrow.min_humidity}} {% endif %} {% endfor %} ],
+                label: '{{location}} Humid',
+                    data: [ {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %}  {%if envrow.avg_humidity is not none %} { "y": {{ envrow.avg_humidity}} , "yMin": {{envrow.min_humidity}} , "yMax": {{envrow.max_humidity}} } {% endif %} {% endfor %} ],
                 borderWidth: 1,
                 fill: false,
                 pointStyle: getPointStyle('{{location}}'),
                 borderColor: "rgba(100, 190, 255, .4)",
+                errorBarColor: "rgba(100, 190, 255, .4)",
+                errorBarWhiskerColor: "rgba(100, 190, 255, .4)",
                 yAxisID: 'humidity-y-axis'
             },
+            {% if (env_summary[location]| map(attribute='min_pressure') | unique | list ) != [0.0] %}
             {
-                label: '{{location}} Max Humid',
-                    data: [ {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %} {%if envrow.max_humidity is not none %} {{envrow.max_humidity}}{% endif %}{% endfor %} ],
+                label: '{{location}} Pressure',
+                    data: [ {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %}  {%if envrow.avg_pressure is not none %} { "y": {{ envrow.avg_pressure}} } {% endif %} {% endfor %} ],
                 borderWidth: 1,
                 fill: false,
                 pointStyle: getPointStyle('{{location}}'),
                 borderColor: "rgba(231, 84, 255, .4)",
-                yAxisID: 'humidity-y-axis'
+                yAxisID: 'pressure-y-axis'
             },
+            {%endif%}
             {%endfor%}
         ]
         },
@@ -84,6 +82,15 @@
                                 suggestedMax: 70,
                                 // beginAtZero: true
                             }
+                        },
+                        {
+                            id: 'pressure-y-axis',
+                            position: 'right',
+                            ticks: {
+                                suggestedMin: 900,
+                                suggestedMax: 1030,
+                                // beginAtZero: true
+                            }
                         }
                     ]
                 }
@@ -92,8 +99,6 @@
         });
     </script>
 
-</head>
-<body>
 <div class="ferginzey_title">Ferginzeys' Daily Summary</div>
 <div class="nav_links">
     <div class="nav_link"><a href="/homeServer/">Home Page</a></div>

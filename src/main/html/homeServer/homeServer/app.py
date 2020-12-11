@@ -9,7 +9,6 @@ app = Flask(__name__)
 app.debug = True
 app.filename = "/var/www/html/log/environment.log"
 
-#app.run(debug=True,host="0.0.0.0")
 def verify_token(password):
     passw = 'thisisourtoken'
     if password == passw:
@@ -20,8 +19,18 @@ def verify_token(password):
 @app.route('/')
 def showHomePage():
     dao = HomeServerDao()
-    last_log = dao.getLastEnvironmentLog()
-    return render_template("home.html", ip="192.168.102.124", latest_env=last_log)
+    last_devices = dao.getLastSeenDevices()
+    last_log = []
+
+    for device in last_devices:
+        new_device = {}
+        reading = dao.getLastEnvironmentLog(device['sensor_location'])
+        new_device['sensor_location'] = device['sensor_location']
+        new_device['remote_address'] = device['remote_address']
+        new_device['last_seen_timestamp'] = device['last_seen_timestamp']
+        new_device['last_reading'] = reading
+        last_log.append(new_device)
+    return render_template("home.html", latest_env=last_log)
 
 @app.route('/inventory')
 def getinventory():
@@ -38,6 +47,7 @@ def getinventory():
 def logEnv():
     obj = json.loads(request.args.get('envJson'))
     obj['date'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    obj['remote_address'] = request.remote_addr
 #    file1 = open(app.filename, "a")
 #    file1.write(json.dumps(obj))
 #    file1.write("\n")
@@ -56,12 +66,12 @@ def readEnv():
     dao = HomeServerDao()
     times = dao.getHourlyTimes()
     locations = dao.getLocationsInPeriod()
-    last_log = dao.getLastEnvironmentLog()
     env_summary = {}
-    print (locations)
     for location in locations:
-        env_summary[location['sensor_location']] = dao.getEnvironmentLogSummary(location[0])
-    return render_template("hourlySummary.html", latest_env=last_log, locations=locations, times=times, env_summary=env_summary)
+        location_summary = dao.getEnvironmentLogSummary(location[0])
+        location_summary.append(dao.getLastEnvironmentLog(location['sensor_location']))
+        env_summary[location['sensor_location']] = location_summary
+    return render_template("hourlySummary.html", locations=locations, times=times, env_summary=env_summary)
 
 @app.route('/dailySummary')
 def dailySummary():

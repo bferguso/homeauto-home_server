@@ -13,22 +13,50 @@ class HomeServerDao:
     def get_connection(self):
         return psycopg2.connect("dbname="+self.database+" user="+self.user+" password="+self.password)
 
+    def logDeviceSeen(self, cur, envData):
+        cur.execute("select * from public.ha_remote_devices where sensor_location = %s and remote_address =  %s;"
+                    , (envData['location'], envData['remote_address']))
+        if cur.rowcount == 0:
+            cur.execute("insert into public.ha_remote_devices (sensor_location, remote_address, last_seen_timestamp ) values( %s, %s, current_timestamp );"
+                        , (envData['location'], envData['remote_address']))
+        else:
+            cur.execute("update public.ha_remote_devices set last_seen_timestamp = current_timestamp where sensor_location = %s and remote_address =  %s;"
+                        , (envData['location'], envData['remote_address']))
+
     def saveEnvironmentLog(self, envData):
         conn = self.get_connection()
         cur = conn.cursor()
         pressure = envData['pressure'] if 'pressure' in envData else 0.00
         alt = envData['alt'] if 'alt' in envData else 0.00
         heatIndex = envData['heatIndex'] if 'heatIndex' in envData else 0.00
-        cur.execute("insert into ha_environment_log(sensor_location,temperature,humidity, pressure, altitude, heat_index) values (%s, %s, %s, %s, %s, %s);"
-                    , (envData['location'] , envData['temp'], envData['humidity'], pressure, alt, heatIndex))
+        cur.execute("insert into public.ha_environment_log(sensor_location,temperature,humidity, pressure, altitude, heat_index) values (%s, %s, %s, %s, %s, %s);"
+                    , (envData['location'], envData['temp'], envData['humidity'], pressure, alt, heatIndex))
+        self.logDeviceSeen(cur, envData)
         conn.commit()
         cur.close()
         conn.close()
 
-    def getLastEnvironmentLog(self):
+    def getLastSeenDevices(self):
         conn = self.get_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        cur.execute("select * from ha_environment_log order by sample_timestamp desc;");
+        cur.execute("select sensor_location, remote_address, last_seen_timestamp from public.ha_remote_devices order by last_seen_timestamp desc;");
+        lastLog = cur.fetchall()
+        cur.close()
+        conn.close()
+        return lastLog
+
+    def getLastEnvironmentLog(self, location):
+        conn = self.get_connection()
+        cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
+        cur.execute("""
+            select sensor_location,
+                   temperature,
+                   humidity,
+                   pressure,
+                   sample_timestamp
+             from public.ha_environment_log where sensor_location = %(location)s order by sample_timestamp desc;
+        """,
+                    {'location': location})
         lastLog = cur.fetchone()
         cur.close()
         conn.close()

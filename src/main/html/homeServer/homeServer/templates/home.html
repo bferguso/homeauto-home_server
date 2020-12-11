@@ -15,12 +15,13 @@
 
     <script>
         //var ipAddress = "{{ ip }}";
-        var ipAddress = "192.168.102.124";
+        //var ipAddress = "192.168.102.124";
+        /*
         $().ready(function () {
             $("#sensorIp").text(ipAddress);
-
         });
-        var updateSensorLocation = function () {
+         */
+        var updateSensorLocation = function (ipAddress) {
             var newLocation = $("#sensorLocationText").val();
             $.ajax({
                 method: "GET",
@@ -45,26 +46,32 @@
 </div>
 <hr>
 <div>Current Readings</div>
-<div class="env_reading_title">{{latest_env.sensor_location}} @ {{latest_env.sample_timestamp}}</div>
+{% for location in latest_env %}
+<div class="env_reading_title">{{location.sensor_location}} ({{location.remote_address }})</div>
+<div class="env_reading">
+    <div class="env_title">Last Seen</div>
+    <div class="env_value">{{location.last_seen_timestamp}}</div>
+</div>
 <div class="env_reading">
     <div class="env_title">Temperature</div>
-    <div class="env_value">{{latest_env.temperature}}</div>
+    <div class="env_value">{{location.last_reading.temperature}}</div>
 </div>
 <div class="env_reading">
     <div class="env_title">Humidity</div>
-    <div class="env_value">{{latest_env.humidity}}%</div>
+    <div class="env_value">{{location.last_reading.humidity}}%</div>
 </div>
 <div class="env_reading">
     <div class="env_title">Pressure</div>
-    <div class="env_value">{{latest_env.pressure}}</div>
+    <div class="env_value">{{location.last_reading.pressure}}</div>
 </div>
-<hr>
 <form>
     <div id="resultMessage" class="alert-success"></div>
-    <label for="sensorLocationText">Sensor Location <span id="sensorIp"></span></label>
-    <input id="sensorLocationText" type="text" value="mechanical"/>
-    <button class="btn btn-link" onclick="updateSensorLocation(); return false;" value="Update Location"><span
+    <label for="sensorLocationText">Sensor Location <span id="sensorIp">{{location.remote_address}}</span></label>
+    <input id="sensorLocationText" type="text" value="{{location.sensor_location}}"/>
+    <button class="btn btn-link" onclick="updateSensorLocation('{{location.remote_address}}'); return false;" value="Update Location"><span
             class="glyphicon glyphicon-refresh"></span></button>
 </form>
+<hr>
+{% endfor %}
 </body>
 </html>
