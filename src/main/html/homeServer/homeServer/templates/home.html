@@ -22,7 +22,7 @@
         });
          */
         var updateSensorLocation = function (ipAddress) {
-            var newLocation = $("#sensorLocationText").val();
+            var newLocation = $("#sensorLocationText_"+ipAddress).val();
             $.ajax({
                 method: "GET",
                 url: "http://" + ipAddress + "/updateConfig?physicalLocation=" + newLocation,
@@ -46,32 +46,38 @@
 </div>
 <hr>
 <div>Current Readings</div>
-{% for location in latest_env %}
-<div class="env_reading_title">{{location.sensor_location}} ({{location.remote_address }})</div>
-<div class="env_reading">
-    <div class="env_title">Last Seen</div>
-    <div class="env_value">{{location.last_seen_timestamp}}</div>
-</div>
-<div class="env_reading">
-    <div class="env_title">Temperature</div>
-    <div class="env_value">{{location.last_reading.temperature}}</div>
-</div>
-<div class="env_reading">
-    <div class="env_title">Humidity</div>
-    <div class="env_value">{{location.last_reading.humidity}}%</div>
-</div>
-<div class="env_reading">
-    <div class="env_title">Pressure</div>
-    <div class="env_value">{{location.last_reading.pressure}}</div>
+<div id="rawDataTable" class="table active" style="padding-left: 100px;">
+    <div class="row">
+        <div class="col-sm-1 col-md-1 env_reading_title">Location</div>
+        <div class="col-sm-2 col-md-2 env_reading_title">Address</div>
+        <div class="col-sm-3 col-md-3 env_reading_title">Last Seen</div>
+        <div class="col-sm-1 col-md-1 number env_reading_title">Temp</div>
+        <div class="col-sm-1 col-md-1 number env_reading_title">Humidity</div>
+        <div class="col-sm-1 col-md-1 number env_reading_title">Pressure</div>
+    </div>
+    {% for location in latest_env %}
+    <div class="row">
+        <div class="col-sm-1 col-md-1 env_reading_title">{{location.sensor_location}}</div>
+        <div class="col-sm-2 col-md-2">{{location.remote_address}}</div>
+        <div class="col-sm-3 col-md-3">{{location.last_seen_timestamp}}</div>
+        <div class="col-sm-1 col-md-1 number">{{location.last_reading.temperature}}</div>
+        <div class="col-sm-1 col-md-1 number">{{location.last_reading.humidity}}%</div>
+        <div class="col-sm-1 col-md-1 number">{{location.last_reading.pressure}}</div>
+    </div>
+    {% endfor %}
 </div>
 <form>
+    <div class="env_reading_title">Update Configuration</div>
+    {% for location in latest_env %}
     <div id="resultMessage" class="alert-success"></div>
-    <label for="sensorLocationText">Sensor Location <span id="sensorIp">{{location.remote_address}}</span></label>
-    <input id="sensorLocationText" type="text" value="{{location.sensor_location}}"/>
+    <label for="sensorLocationText_{{location.remote_address}}"><span id="sensorIp_{{ location.remote_address }}">{{location.remote_address}}</span></label>
+    <input id="sensorLocationText_{{location.remote_address}}" type="text" value="{{location.sensor_location}}"/>
+    <input id="publishHost_{{location.remote_address}}" type="text" value="192.168.102.178"/>
+    <input id="publishUrl_{{location.remote_address}}" type="text"  size="30" value="/homeServer/logEnv?envJson="/>
     <button class="btn btn-link" onclick="updateSensorLocation('{{location.remote_address}}'); return false;" value="Update Location"><span
             class="glyphicon glyphicon-refresh"></span></button>
+    {% endfor %}
 </form>
 <hr>
-{% endfor %}
 </body>
 </html>

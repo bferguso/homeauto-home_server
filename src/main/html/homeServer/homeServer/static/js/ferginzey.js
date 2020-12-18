@@ -23,3 +23,16 @@ var getPointStyle = function(location)
     }
     return 'rectangle';
 }
+
+var getLineWidth = function (location)
+{
+    if (location === 'office')
+    {
+        return 2;
+    }
+    else if (location === 'bedroom')
+    {
+        return 3;
+    }
+    return 6;
+}
