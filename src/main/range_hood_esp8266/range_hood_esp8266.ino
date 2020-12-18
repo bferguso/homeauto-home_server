@@ -40,31 +40,6 @@ void setup() {
     delay(100);
     pinMode(pin_led, OUTPUT);
     pinMode(pin_range_hood_trigger, INPUT);
-    // We start by connecting to a WiFi network
-
-    /*
-    Serial.print("Connecting to ");
-    Serial.println(ssid);
-
-    WiFi.begin(ssid, password);
-
-    while (WiFi.status() != WL_CONNECTED) {
-        delay(500);
-        Serial.print(".");
-    }
-
-    Serial.println("");
-    Serial.println("WiFi connected...");
-    Serial.print("IP address: ");
-    Serial.println(WiFi.localIP());
-    Serial.print("Netmask: ");
-    Serial.println(WiFi.subnetMask());
-    Serial.print("Gateway: ");
-    Serial.println(WiFi.gatewayIP());
-
-    Serial.print("Server started!");
-    Serial.println();
-    */
     delayTime = 500;
     //setMakeupActive(false);
 }
@@ -87,6 +62,7 @@ void loop() {
             espRemote.printEnv(data);
         }
     }
+    espRemote.handleClient();
 /*
   if (digitalRead(pin_range_hood_trigger))
   {
