@@ -17,7 +17,7 @@ uint8_t pin_relay = 14;
 char *ssid = "ferginzeys secure";
 char *password = "h0w3S0undV13w";
 
-String physicalLocation = "mechanical_room2";
+String physicalLocation = "mechanical_room";
 
 PressButtonCallback onCallback(pin_relay, 0);
 PressButtonCallback offCallback(pin_relay, 1);
