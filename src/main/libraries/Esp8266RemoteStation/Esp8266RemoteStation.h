@@ -9,12 +9,14 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <EnvData.h>
+#include <RemoteServerCallback.h>
 
 class Esp8266RemoteStation {
    public:
       Esp8266RemoteStation(String physicalLocation);
       void initServer(char* ssid, char* password);
       void setPublishEndpoint(String host, String url);
+      void registerServerUrl(String url, RemoteServerCallback *callback);
       String getHelpMessage();
       void handleClient();
       void sendEnv(EnvData data);
@@ -26,9 +28,6 @@ class Esp8266RemoteStation {
       String getConfig();
 
    private:
-      const char* quote = "%22";
-      const char* openBrace = "%7b";
-      const char* closeBrace = "%7d";
       int _httpPort;
       String _envPublishHost = "cabin.local";
       String _envPublishUrl = "/homeServer/logEnv?envJson=";
@@ -40,6 +39,7 @@ class Esp8266RemoteStation {
       ESP8266WebServer _server;
       String wrap(String text);
       String getEnvJson(EnvData data);
+      void callbackWrapper(RemoteServerCallback *callback);
 };
 
 #endif

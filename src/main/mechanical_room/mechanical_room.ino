@@ -3,6 +3,7 @@
  */
 
 #include "Esp8266RemoteStation.h"
+#include "PressButtonCallback.h"
 
 /* BME280 includes */
 #include <Adafruit_Sensor.h>
@@ -16,16 +17,10 @@ uint8_t pin_relay = 14;
 char *ssid = "ferginzeys secure";
 char *password = "h0w3S0undV13w";
 
-const char *quote = "%22";
-const char *openBrace = "%7b";
-const char *closeBrace = "%7d";
-
-const char *host = "wifitest.adafruit.com";
-//String envPublishHost = "192.168.102.178";
-String envPublishHost = "cabin.local";
-String envPublishUrl = "/homeServer/logEnv?envJson=";
 String physicalLocation = "mechanical_room2";
 
+PressButtonCallback onCallback(pin_relay, 0);
+PressButtonCallback offCallback(pin_relay, 1);
 
 unsigned long delayTime;
 unsigned long sendEnvDelayTime;
@@ -51,15 +46,8 @@ void setup() {
     pinMode(pin_led, OUTPUT);
     pinMode(pin_relay, OUTPUT);
 
-    /*
-    server.on("/on", relayOn);
-    Serial.println("Registered path: /on");
-
-    server.on("/off", relayOff);
-    Serial.println("Registered path: /off");
-
-    */
-
+    espRemote.registerServerUrl("/on", &onCallback);
+    espRemote.registerServerUrl("/off", &offCallback);
 
     // BME
     if (!bme.begin()) {
@@ -75,17 +63,13 @@ void setup() {
         Serial.print("        ID of 0x61 represents a BME 680.\n");
         while (1) delay(10);
     }
-
     delayTime = 500;
-
     relayOff();
     // END BME
 }
 
-int value = 0;
-
 void loop() {
-    delay(delayTime);
+    //delay(delayTime);
     if (espRemote.readyToSendEnv() || espRemote.readyToPrint())
     {
         data = reader.readEnv();
@@ -103,14 +87,10 @@ void loop() {
 }
 
 void setLedState(uint8_t newState) {
-    /*
     digitalWrite(pin_led, newState);
     digitalWrite(pin_relay, newState);
-    server.sendHeader("Access-Control-Allow-Origin", "*");
-    server.send(200, "text/plain", "Toggled to " + String(digitalRead(pin_led)) + "\n");
     Serial.println("Pin LED: " + String(digitalRead(pin_led)));
     Serial.println("Pin Relay: " + String(digitalRead(pin_relay)));
-     */
 }
 
 void relayOff() {
