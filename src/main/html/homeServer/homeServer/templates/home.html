@@ -48,7 +48,7 @@
 <div>Current Readings</div>
 <div id="rawDataTable" class="table active" style="padding-left: 100px;">
     <div class="row">
-        <div class="col-sm-1 col-md-1 env_reading_title">Location</div>
+        <div class="col-sm-2 col-md-2 env_reading_title">Location</div>
         <div class="col-sm-2 col-md-2 env_reading_title">Address</div>
         <div class="col-sm-3 col-md-3 env_reading_title">Last Seen</div>
         <div class="col-sm-1 col-md-1 number env_reading_title">Temp</div>
@@ -57,7 +57,7 @@
     </div>
     {% for location in latest_env %}
     <div class="row">
-        <div class="col-sm-1 col-md-1 env_reading_title">{{location.sensor_location}}</div>
+        <div class="col-sm-2 col-md-2 env_reading_title">{{location.sensor_location}}</div>
         <div class="col-sm-2 col-md-2">{{location.remote_address}}</div>
         <div class="col-sm-3 col-md-3">{{location.last_seen_timestamp}}</div>
         <div class="col-sm-1 col-md-1 number">{{location.last_reading.temperature}}</div>
