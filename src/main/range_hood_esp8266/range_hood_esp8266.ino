@@ -12,8 +12,6 @@ uint8_t pin_range_hood_trigger = 13;
 uint8_t analogSensor = A0;
 
 
-//const char* ssid     = "ferginzeys";
-//const char* password = "m0unta1nS1d3!";
 char *ssid = "ferginzeys secure";
 char *password = "h0w3S0undV13w";
 
@@ -33,6 +31,7 @@ Esp8266RemoteStation espRemote("range_hood");
 void setup() {
     Serial.begin(9600);
     dht.begin();
+
     espRemote.initServer(ssid, password);
     espRemote.setPublishEndpoint("cabin.local", "/homeServer/logEnv?envJson=");
     Serial.println("ESP Config "+espRemote.getConfig());
@@ -44,12 +43,10 @@ void setup() {
     //setMakeupActive(false);
 }
 
-int value = 0;
 EnvData data;
 
 void loop() {
     delay(delayTime);
-    ++value;
     if (espRemote.readyToSendEnv() || espRemote.readyToPrint())
     {
         data = reader.readEnv();

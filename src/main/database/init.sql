@@ -20,5 +20,6 @@ create index ha_env_log_sample_time_idx on ha_environment_log(sample_timestamp N
 create table homeauto.ha_remote_devices (
     remote_address varchar(15) not null,
     sensor_location varchar(20) not null,
+    device_active boolean default 'Y' not null,
     last_seen_timestamp timestamp default current_timestamp
 );
