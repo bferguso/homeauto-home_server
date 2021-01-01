@@ -12,9 +12,6 @@ uint8_t pin_range_hood_trigger = 13;
 uint8_t analogSensor = A0;
 
 
-char *ssid = "ferginzeys secure";
-char *password = "h0w3S0undV13w";
-
 int makeupFanHttpPort = 80;
 char *makeupFanHost = "192.168.102.124";
 const char *onService = "/on";
@@ -32,14 +29,15 @@ void setup() {
     Serial.begin(9600);
     dht.begin();
 
-    espRemote.initServer(ssid, password);
-    espRemote.setPublishEndpoint("cabin.local", "/homeServer/logEnv?envJson=");
+    espRemote.initServer();
+    //espRemote.setPublishEndpoint("cabin.local", "/homeServer/logEnv?envJson=");
     Serial.println("ESP Config "+espRemote.getConfig());
 
     delay(100);
     pinMode(pin_led, OUTPUT);
     pinMode(pin_range_hood_trigger, INPUT);
     delayTime = 500;
+    digitalWrite(pin_led, 1);
     //setMakeupActive(false);
 }
 

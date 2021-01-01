@@ -14,6 +14,7 @@
 class Esp8266RemoteStation {
    public:
       Esp8266RemoteStation(String physicalLocation);
+      void initServer();
       void initServer(char* ssid, char* password);
       void setPublishEndpoint(String host, String url);
       void registerServerUrl(String url, RemoteServerCallback *callback);
@@ -31,6 +32,8 @@ class Esp8266RemoteStation {
       int _httpPort;
       String _envPublishHost = "cabin.local";
       String _envPublishUrl = "/homeServer/logEnv?envJson=";
+      char *_defaultSsid = "ferginzeys secure";
+      char *_defaultPassword = "h0w3S0undV13w";
       String _physicalLocation;
       int _sendInterval;
       int _printInterval;

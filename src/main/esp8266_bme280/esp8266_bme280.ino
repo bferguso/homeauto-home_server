@@ -10,12 +10,9 @@
 
 #include "BME280Reader.h"
 
-char *ssid = "ferginzeys secure";
-char *password = "h0w3S0undV13w";
-
 EnvData data;
 
-Esp8266RemoteStation espRemote("office2");
+Esp8266RemoteStation espRemote("office");
 
 Adafruit_BME280 bme; // I2C
 BME280Reader reader(&bme);
@@ -26,7 +23,7 @@ void setup() {
     Serial.begin(9600);
     // We start by connecting to a WiFi network
 
-    espRemote.initServer(ssid, password);
+    espRemote.initServer();
     //espRemote.setPublishEndpoint("cabin.local", "/homeServer/logEnv?envJson=");
     Serial.println("ESP Config "+espRemote.getConfig());
 

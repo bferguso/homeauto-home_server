@@ -13,9 +13,6 @@
 // Uncomment whatever type you're using!
 #define DHTTYPE DHT22   // DHT 22  (AM2302), AM2321
 
-char *ssid = "ferginzeys secure";
-char *password = "h0w3S0undV13w";
-
 // Connect pin 1 (on the left) of the sensor to +5V
 // NOTE: If using a board with 3.3V logic like an Arduino Due connect pin 1
 // to 3.3V instead of 5V!
@@ -38,7 +35,7 @@ void setup() {
     Serial.begin(9600);
     dht.begin();
 
-    espRemote.initServer(ssid, password);
+    espRemote.initServer();
     //espRemote.setPublishEndpoint("cabin.local", "/homeServer/logEnv?envJson=");
     Serial.println("ESP Config " + espRemote.getConfig());
 }

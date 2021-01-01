@@ -14,6 +14,10 @@ Esp8266RemoteStation::Esp8266RemoteStation(String physicalLocation) {
     Serial.begin(9600);
 }
 
+void Esp8266RemoteStation::initServer() {
+    this->initServer(this->_defaultSsid, this->_defaultPassword);
+}
+
 void Esp8266RemoteStation::initServer(char *ssid, char *password) {
     Serial.println();
     Serial.print("Connecting to ");

@@ -14,9 +14,6 @@
 uint8_t pin_led = 2;
 uint8_t pin_relay = 14;
 
-char *ssid = "ferginzeys secure";
-char *password = "h0w3S0undV13w";
-
 String physicalLocation = "mechanical_room";
 
 PressButtonCallback onCallback(pin_relay, 0);
@@ -27,7 +24,7 @@ unsigned long sendEnvDelayTime;
 
 EnvData data;
 
-Esp8266RemoteStation espRemote("mechanical_room2");
+Esp8266RemoteStation espRemote("mechanical_room");
 
 Adafruit_BME280 bme; // I2C
 BME280Reader reader(&bme);
@@ -38,8 +35,8 @@ void setup() {
     Serial.begin(9600);
     // We start by connecting to a WiFi network
 
-    espRemote.initServer(ssid, password);
-    espRemote.setPublishEndpoint("cabin.local", "/homeServer/logEnv?envJson=");
+    espRemote.initServer();
+    //espRemote.setPublishEndpoint("cabin.local", "/homeServer/logEnv?envJson=");
     Serial.println("ESP Config "+espRemote.getConfig());
 
     delay(100);
