@@ -36,3 +36,23 @@ div.env_title {
 div.env_value {
     display: inline-block;
 }
+
+div.dashboardContainer {
+    column-count: 2;
+    column-gap: 10px;
+    margin: 10px;
+}
+
+/* CFSWeb Dashboard classes */
+div.dashboardItem {
+    border: solid thin black;
+    border-radius: 5px;
+    background-color: #cecece;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+    margin-bottom: 10px;
+    -webkit-column-break-inside: avoid;
+    padding: 10px;
+    box-sizing: border-box;
+}

@@ -34,8 +34,8 @@
                     ],
                     borderWidth: 1,
                     fill: false,
-                    pointStyle: getPointStyle('{{location}}'),
-                    borderColor: "rgba(231, 84, 0, .4)",
+                    pointStyle: getPointStyle('temperature'),
+                    borderColor: getLocationColour('{{location}}'),
                     yAxisID: 'temperature-y-axis'
                     },
             {
@@ -45,8 +45,8 @@
                     ],
                     borderWidth: 1,
                     fill: false,
-                    pointStyle: getPointStyle('{{location}}'),
-                    borderColor: "rgba(100, 190, 100, .4)",
+                    pointStyle: getPointStyle('humidity'),
+                    borderColor: getLocationColour('{{location}}'),
                     yAxisID: 'humidity-y-axis'
             },
             {% if (env_summary[location]| map(attribute='pressure') | unique | list ) != [0.0] %}
@@ -57,8 +57,8 @@
                 ],
                 borderWidth: 1,
                 fill: false,
-                pointStyle: getPointStyle('{{location}}'),
-                borderColor: "rgba(0, 0, 0, .4)",
+                pointStyle: getPointStyle('pressure'),
+                borderColor: getLocationColour('{{location}}'),
                 yAxisID: 'pressure-y-axis'
 
             },

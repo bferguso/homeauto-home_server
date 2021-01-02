@@ -35,10 +35,10 @@
                     errorBarLineWidth: getLineWidth('{{location}}'),
                     errorBarWhiskerLineWidth: getLineWidth('{{location}}'),
                     fill: false,
-                    pointStyle: getPointStyle('{{location}}'),
-                    borderColor: "rgba(100, 190, 100, .4)",
-                    errorBarColor: "rgba(100, 190, 100, .4)",
-                    errorBarWhiskerColor: "rgba(100, 190, 100, .4)",
+                    pointStyle: getPointStyle('temperature'),
+                    borderColor: getLocationColour('{{location}}'),
+                    errorBarColor: getLocationColour('{{location}}'),
+                    errorBarWhiskerColor: getLocationColour('{{location}}'),
                     yAxisID: 'temperature-y-axis'
                 },
             {
@@ -48,10 +48,10 @@
                 errorBarLineWidth: getLineWidth('{{location}}'),
                 errorBarWhiskerLineWidth: getLineWidth('{{location}}'),
                 fill: false,
-                pointStyle: getPointStyle('{{location}}'),
-                borderColor: "rgba(100, 190, 255, .4)",
-                errorBarColor: "rgba(100, 190, 255, .4)",
-                errorBarWhiskerColor: "rgba(100, 190, 255, .4)",
+                pointStyle: getPointStyle('humidity'),
+                borderColor: getLocationColour('{{location}}'),
+                errorBarColor: getLocationColour('{{location}}'),
+                errorBarWhiskerColor: getLocationColour('{{location}}'),
                 yAxisID: 'humidity-y-axis'
             },
             {% if (env_summary[location]| map(attribute='min_pressure') | unique | list ) != [0.0] %}
@@ -60,8 +60,8 @@
                     data: [ {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %}  {%if envrow.avg_pressure is not none %} { "y": {{ envrow.avg_pressure}} } {% endif %} {% endfor %} ],
                 borderWidth: 1,
                 fill: false,
-                pointStyle: getPointStyle('{{location}}'),
-                borderColor: "rgba(231, 84, 255, .4)",
+                pointStyle: getPointStyle('pressure'),
+                borderColor: getLocationColour('{{location}}'),
                 yAxisID: 'pressure-y-axis'
             },
             {%endif%}
