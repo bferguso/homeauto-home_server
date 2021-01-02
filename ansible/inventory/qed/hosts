@@ -1,0 +1,3 @@
+[pi-servers]
+cabin.local ansible_connection=ssh
+
