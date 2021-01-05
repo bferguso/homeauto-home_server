@@ -30,7 +30,7 @@
 
             var warningTime = new Date();
             warningTime.setHours(warningTime.getHours() -1);
-            var errorTime = new Date() - 1;
+            var errorTime = new Date();
             errorTime.setDate(errorTime.getDate() -1);
 
             $("div.dashboardTimestamp").each(function() {
@@ -62,6 +62,20 @@
                 }
             });
         }
+
+        var toggleInactiveLocations = function()
+        {
+           $("div.dashboardItem.active_False").each(function() {
+               if ($(this).is(":visible"))
+               {
+                   $(this).hide();
+               }
+               else
+               {
+                   $(this).show();
+               }
+           });
+        }
     </script>
 </head>
 <body>
@@ -71,12 +85,13 @@
     <div class="nav_link"><a href="/homeServer/dailySummary">Daily Summary</a></div>
 </div>
 <hr>
-<div>Current Readings</div>
+<div>Current Readings <div class="sectionToggle" style="display: inline;" title="Show/Hide inactive locations" onclick="toggleInactiveLocations();"><i class="glyphicon glyphicon-eye-close"></i></div></div>
+
 <div class="dashboardContainer">
     {% for location in latest_env %}
-    <div class="dashboardItem" {%if not location.device_active %} style="display: none;" {%endif%}>
+    <div class="dashboardItem active_{{location.device_active}}" {%if not location.device_active %} style="display: none;" {%endif%}>
         <div style="margin-top: -5px">
-            <div class="dashboardLocation">{{location.sensor_location}}</div>
+            <div class="dashboardLocation"><a href="hourlySummary?locations={{location.sensor_location}}">{{location.sensor_location}}</a></div>
             <div class="dashboardIp">{{location.remote_address}}</div>
         </div>
         <div class="dashboardTemp">{{location.last_reading.temperature}}&deg;C</div>

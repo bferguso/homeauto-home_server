@@ -51,10 +51,15 @@ class HomeServerDao:
         cur.execute("""
             select sensor_location,
                    temperature,
-                   humidity,
+                   humidity, 
                    pressure,
-                   sample_timestamp
-             from public.ha_environment_log where sensor_location = %(location)s order by sample_timestamp desc;
+                   sample_timestamp 
+            from public.ha_environment_log
+            where sensor_location = %(location)s 
+                and sample_timestamp =
+                    (select max(sample_timestamp) from public.ha_environment_log
+                        where sensor_location = %(location)s)
+            order by sample_timestamp desc;
         """,
                     {'location': location})
         lastLog = cur.fetchone()

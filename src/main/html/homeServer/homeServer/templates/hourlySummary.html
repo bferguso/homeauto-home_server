@@ -84,8 +84,9 @@
                                 suggestedMax: 70,
                                 // beginAtZero: true
                             }
-                        },
-                        {
+                        }
+                        {% if (env_summary[location]| map(attribute='pressure') | unique | list ) != [0.0] %}
+                        ,{
                             id: 'pressure-y-axis',
                             position: 'right',
                             ticks: {
@@ -94,6 +95,7 @@
                                 // beginAtZero: true
                             }
                         }
+                        {% endif %}
                     ]
                 }
             }

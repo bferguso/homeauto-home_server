@@ -63,25 +63,33 @@ def logEnv():
     return resp
 
 @app.route('/hourlySummary')
-def readEnv():
+def hourlySummary():
+    locationscsv = request.args.get('locations')
     dao = HomeServerDao()
+    if locationscsv:
+        locations = map(lambda a: {'sensor_location': a.strip()}, locationscsv.encode('ascii','ignore').split(','))
+    else:
+        locations = dao.getLocationsInPeriod()
     times = dao.getHourlyTimes()
-    locations = dao.getLocationsInPeriod()
     env_summary = {}
     for location in locations:
-        location_summary = dao.getEnvironmentLogSummary(location[0])
+        location_summary = dao.getEnvironmentLogSummary(location['sensor_location'])
         location_summary.append(dao.getLastEnvironmentLog(location['sensor_location']))
         env_summary[location['sensor_location']] = location_summary
     return render_template("hourlySummary.html", locations=locations, times=times, env_summary=env_summary)
 
 @app.route('/dailySummary')
 def dailySummary():
+    locationscsv = request.args.get('locations')
     dao = HomeServerDao()
     times = dao.getDailyTimes()
-    locations = dao.getLocationsInPeriod()
+    if locationscsv:
+        locations = map(lambda a: {'sensor_location': a.strip()}, locationscsv.encode('ascii','ignore').split(','))
+    else:
+        locations = dao.getLocationsInPeriod()
     env_summary = {}
     for location in locations:
-        env_summary[location['sensor_location']] = dao.getEnvironmentDailyLogSummary(location[0])
+        env_summary[location['sensor_location']] = dao.getEnvironmentDailyLogSummary(location['sensor_location'])
     return render_template("dailySummary.html", locations=locations, times=times, env_summary=env_summary)
 
 def convert_value(value):
