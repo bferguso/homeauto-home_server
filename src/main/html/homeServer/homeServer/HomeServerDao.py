@@ -39,7 +39,7 @@ class HomeServerDao:
     def getLastSeenDevices(self):
         conn = self.get_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        cur.execute("select sensor_location, remote_address, last_seen_timestamp from public.ha_remote_devices order by last_seen_timestamp desc;");
+        cur.execute("select sensor_location, remote_address, last_seen_timestamp, device_active from public.ha_remote_devices order by last_seen_timestamp desc;");
         lastLog = cur.fetchall()
         cur.close()
         conn.close()

@@ -28,6 +28,7 @@ def showHomePage():
         new_device['sensor_location'] = device['sensor_location']
         new_device['remote_address'] = device['remote_address']
         new_device['last_seen_timestamp'] = device['last_seen_timestamp']
+        new_device['device_active'] = device['device_active']
         new_device['last_reading'] = reading
         last_log.append(new_device)
     return render_template("home.html", latest_env=last_log)

@@ -12,17 +12,43 @@
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
     <!-- Latest compiled and minified JavaScript -->
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ferginzey.js') }}"></script>
 
     <script>
-        //var ipAddress = "{{ ip }}";
-        //var ipAddress = "192.168.102.124";
-        /*
         $().ready(function () {
-            $("#sensorIp").text(ipAddress);
+            var value;
+            $("div.dashboardHumidity").each(function() {
+                value = parseFloat($(this).text());
+                if (value > 55 && value < 60) { flagReading($(this), "readingWarning"); }
+                else if (value >= 60) { flagReading($(this), "readingImportant"); }
+            });
+            $("div.dashboardTemp").each(function() {
+                value = parseFloat($(this).text());
+                if (value < 5 && value > 0) { flagReading($(this), "readingWarning"); }
+                else if (value <= 0) { flagReading($(this), "readingImportant"); }
+            });
+
+            var warningTime = new Date();
+            warningTime.setHours(warningTime.getHours() -1);
+            var errorTime = new Date() - 1;
+            errorTime.setDate(errorTime.getDate() -1);
+
+            $("div.dashboardTimestamp").each(function() {
+                value = new Date($(this).text().replace(/\..*$/, ""));
+
+                if (value < warningTime && value > errorTime) { flagReading($(this), "readingWarning"); }
+                else if (value < errorTime) { flagReading($(this), "readingImportant");}
+            });
         });
-         */
+
+        var flagReading = function(field, warningClass)
+        {
+            field.addClass(warningClass);
+            field.closest("div.dashboardItem").addClass(warningClass);
+        }
+        
         var updateSensorLocation = function (ipAddress) {
-            var newLocation = $("#sensorLocationText_"+ipAddress).val();
+            var newLocation = $("#sensorLocationText_" + ipAddress).val();
             $.ajax({
                 method: "GET",
                 url: "http://" + ipAddress + "/updateConfig?physicalLocation=" + newLocation,
@@ -46,38 +72,40 @@
 </div>
 <hr>
 <div>Current Readings</div>
-<div id="rawDataTable" class="table active" style="padding-left: 100px;">
-    <div class="row">
-        <div class="col-sm-2 col-md-2 env_reading_title">Location</div>
-        <div class="col-sm-2 col-md-2 env_reading_title">Address</div>
-        <div class="col-sm-3 col-md-3 env_reading_title">Last Seen</div>
-        <div class="col-sm-1 col-md-1 number env_reading_title">Temp</div>
-        <div class="col-sm-1 col-md-1 number env_reading_title">Humidity</div>
-        <div class="col-sm-1 col-md-1 number env_reading_title">Pressure</div>
-    </div>
+<div class="dashboardContainer">
     {% for location in latest_env %}
-    <div class="row">
-        <div class="col-sm-2 col-md-2 env_reading_title">{{location.sensor_location}}</div>
-        <div class="col-sm-2 col-md-2">{{location.remote_address}}</div>
-        <div class="col-sm-3 col-md-3">{{location.last_seen_timestamp}}</div>
-        <div class="col-sm-1 col-md-1 number">{{location.last_reading.temperature}}</div>
-        <div class="col-sm-1 col-md-1 number">{{location.last_reading.humidity}}%</div>
-        <div class="col-sm-1 col-md-1 number">{{location.last_reading.pressure}}</div>
+    <div class="dashboardItem" {%if not location.device_active %} style="display: none;" {%endif%}>
+        <div style="margin-top: -5px">
+            <div class="dashboardLocation">{{location.sensor_location}}</div>
+            <div class="dashboardIp">{{location.remote_address}}</div>
+        </div>
+        <div class="dashboardTemp">{{location.last_reading.temperature}}&deg;C</div>
+        <div>
+            <div class="dashboardHumidity">{{location.last_reading.humidity}}%</div>
+            <div class="dashboardPressure">{{location.last_reading.pressure/10}} kPa</div>
+        </div>
+        <div class="smallDarkGray">Last seen:
+            <div class="dashboardTimestamp">{{location.last_seen_timestamp}} </div>
+            <div class="dashboardActive">({{location.device_active}})</div>
+        </div>
+        <div style="font-size: xx-small;" class="sectionToggle" onclick="toggleVisibility('config_{{location.remote_address | replace(".","_")}}')">Update Config
     </div>
-    {% endfor %}
+    <div id="config_{{ location.remote_address| replace(".","_")}}" class="configControls" style="display: none;">
+    <hr style="border-bottom: 5px;">
+    <div>
+        <input id="sensorLocationText_{{location.remote_address}}" type="text" value="{{location.sensor_location}}"/>
+    </div>
+    <div>
+        <input id="publishHost_{{location.remote_address}}" type="text" value="{{location.remote_address}}"/>
+    </div>
+    <div>
+        <input id="publishUrl_{{location.remote_address}}" type="text" size="30" value="/homeServer/logEnv?envJson="/>
+    </div>
+    </div>
 </div>
-<form>
-    <div class="env_reading_title">Update Configuration</div>
-    {% for location in latest_env %}
-    <div id="resultMessage" class="alert-success"></div>
-    <label for="sensorLocationText_{{location.remote_address}}"><span id="sensorIp_{{ location.remote_address }}">{{location.remote_address}}</span></label>
-    <input id="sensorLocationText_{{location.remote_address}}" type="text" value="{{location.sensor_location}}"/>
-    <input id="publishHost_{{location.remote_address}}" type="text" value="192.168.102.178"/>
-    <input id="publishUrl_{{location.remote_address}}" type="text"  size="30" value="/homeServer/logEnv?envJson="/>
-    <button class="btn btn-link" onclick="updateSensorLocation('{{location.remote_address}}'); return false;" value="Update Location"><span
-            class="glyphicon glyphicon-refresh"></span></button>
-    {% endfor %}
-</form>
+
+{% endfor %}
+</div>
 <hr>
 </body>
 </html>
