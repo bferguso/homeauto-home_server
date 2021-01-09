@@ -88,7 +88,7 @@
 <div>Current Readings <div class="sectionToggle" style="display: inline;" title="Show/Hide inactive locations" onclick="toggleInactiveLocations();"><i class="glyphicon glyphicon-eye-close"></i></div></div>
 
 <div class="dashboardContainer">
-    {% for location in latest_env %}
+    {% for location in home_data.devices %}
     <div class="dashboardItem active_{{location.device_active}}" {%if not location.device_active %} style="display: none;" {%endif%}>
         <div style="margin-top: -5px">
             <div class="dashboardLocation"><a href="hourlySummary?locations={{location.sensor_location}}">{{location.sensor_location}}</a></div>
@@ -118,9 +118,36 @@
     </div>
     </div>
 </div>
-
 {% endfor %}
 </div>
 <hr>
+<div>Marine Weather</div>
+<div class="dashboardContainer">
+    {% for forecast in home_data.forecasts %}
+    <div class="dashboardItem marineForecast">
+        <div class="dashboardLocation marineLocation">{{forecast.location}}</div>
+        {% for forecastEntry in forecast.forecastEntries %}
+        <div class="marineForecastEntry">
+            <div class="forecastTitle">{{forecastEntry.title}}</div>
+            <div class="forecastText">{{forecastEntry.summary | safe}}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+    {% for condition in home_data.current_conditions %}
+    <div class="dashboardItem marineConditions">
+        <div class="marineLocation">
+            <div class="dashboardLocation">{{condition.station}}</div>
+            <div class="marineArea">{{condition.location}}</div>
+        </div>
+        {% for conditionEntry in condition.conditionEntries %}
+        <div class="marineConditionsEntry {%if (loop.index0 % 2 == 0) %}rowEven {% else %} rowOdd {% endif %}">
+           <div class="dashboardHumidity">{{conditionEntry.title | safe}}</div>
+           <div class="dashboardPressure">{{conditionEntry.value | safe}}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
 </body>
 </html>

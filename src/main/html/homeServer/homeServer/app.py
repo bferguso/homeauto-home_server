@@ -2,12 +2,15 @@ from flask import request
 from flask import Flask, render_template
 from flask import Response
 from homeServer.HomeServerDao import HomeServerDao
+from homeServer.dao.ExternalContentDao import ExternalContentDao
+
 import simplejson as json
 import datetime
 import decimal
 app = Flask(__name__)
 app.debug = True
 app.filename = "/var/www/html/log/environment.log"
+externalContent = ExternalContentDao()
 
 def verify_token(password):
     passw = 'thisisourtoken'
@@ -17,10 +20,17 @@ def verify_token(password):
     return False
 
 @app.route('/')
-def showHomePage():
+def home():
     dao = HomeServerDao()
     last_devices = dao.getLastSeenDevices()
-    last_log = []
+    home_data = {}
+    home_data["forecasts"] = [externalContent.getMarineForecast(externalContent.HOWE_SOUND),
+                              externalContent.getMarineForecast(externalContent.GEORGIA_SOUTH)]
+    home_data["current_conditions"] = [externalContent.getMarineConditions(externalContent.PAM_ROCKS),
+                                       externalContent.getMarineConditions(externalContent.POINT_ATKINSON),
+                                       externalContent.getMarineConditions(externalContent.HALIBUT_BANK)
+                                       ]
+    devices = []
 
     for device in last_devices:
         new_device = {}
@@ -30,8 +40,9 @@ def showHomePage():
         new_device['last_seen_timestamp'] = device['last_seen_timestamp']
         new_device['device_active'] = device['device_active']
         new_device['last_reading'] = reading
-        last_log.append(new_device)
-    return render_template("home.html", latest_env=last_log)
+        devices.append(new_device)
+    home_data["devices"] = devices
+    return render_template("home.html", home_data=home_data)
 
 @app.route('/inventory')
 def getinventory():

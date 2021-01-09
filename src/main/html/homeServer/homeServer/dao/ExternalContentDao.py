@@ -1,0 +1,137 @@
+import feedparser
+from bs4 import BeautifulSoup
+import urllib.request
+
+
+class ExternalContentDao:
+    def __init__(self):
+        pass
+
+    # Forecast Locations
+    HOWE_SOUND = "HOWE_SOUND"
+    GEORGIA_NORTH = "GEORGIA_NORTH"
+    GEORGIA_SOUTH = "GEORGIA_SOUTH"
+
+    # Marine Condition Stations
+    PAM_ROCKS = "PAM_ROCKS"
+    POINT_ATKINSON = "POINT_ATKINSON"
+    ENGLISH_BAY = "ENGLISH_BAY"
+    HALIBUT_BANK = "HALIBUT_BANK"
+
+    URLS = {
+        "FORECAST": "https://weather.gc.ca/rss/marine/{area}_e.xml",
+        "CONDITIONS": "https://weather.gc.ca/marine/incs/weather_conditions_ajax.php?mapID=02&siteID={area}&stationID={station}&lang=e&page=cc"
+    }
+    CONDITION_PAGES = {
+        "CURRENT_CONDITIONS": "cc",
+        "PAST_24H_CONDITIONS": "p24hc",
+    }
+
+    AREA_IDS = {
+        "HOWE_SOUND": {"id": "06400", "rss_id": "06400", "display_name": "Howe Sound"},
+        "GEORGIA_NORTH": {"id": "14301", "rss_id": "14300", "display_name": "Straight of Georgia N."},
+        "GEORGIA_SOUTH": {"id": "14305", "rss_id": "14300", "display_name": "Straight of Georgia S."}
+    }
+
+    STATION_IDS = {
+        "PAM_ROCKS": {"id": "WAS", "display_name": "Pam Rocks", "area_name": "HOWE_SOUND"},
+        "POINT_ATKINSON": {"id": "WSB", "display_name": "Point Atkinson", "area_name": "GEORGIA_SOUTH"},
+        "ENGLISH_BAY": {"id": "46304",  "display_name": "English Bay", "area_name": "GEORGIA_SOUTH"},
+        "HALIBUT_BANK": {"id": "46146", "display_name": "Halibut Bank", "area_name": "GEORGIA_SOUTH"}
+    }
+
+    def getMarineForecast(self, location):
+        site = self.__getInfoForLocation(location, self.AREA_IDS)
+        forecast = {"location": site["display_name"], "forecastEntries": []}
+        NewsFeed = feedparser.parse(self.URLS["FORECAST"].replace("{area}", site["rss_id"]))
+        # print ('Number of entries'+str(len(NewsFeed.entries)))
+        # print (NewsFeed)
+        # print (entry.keys())
+        forecast["forecastEntries"].extend(NewsFeed.entries)
+        return forecast
+
+    def getMarineConditions(self, station_name):
+        station = self.__getInfoForLocation(station_name, self.STATION_IDS)
+        site = self.__getInfoForLocation(station["area_name"], self.AREA_IDS)
+        conditions = {"location": site["display_name"], "station": station["display_name"], "conditionEntries": []}
+        response = urllib.request.urlopen(self.URLS["CONDITIONS"].replace("{area}", site["id"]).replace("{station}", station["id"]))
+        raw_data = response.read()
+        encoding = response.info().get_content_charset('utf8')
+        # print(encoding)
+        # print(type(response))
+        conditions["conditionEntries"].extend(self.__parseConditions(raw_data.decode(encoding)))
+        return conditions
+
+    def __getInfoForLocation(self, location, location_list):
+        site = location_list[location]
+        if not site:
+            raise Exception("Invalid location "+location)
+        return site
+
+    def __parseConditions(self, htmlConditions):
+        data = []
+        soup = BeautifulSoup(htmlConditions, "html.parser")
+        for row in soup.find("table").find("tbody").find_all("tr"):
+            key = row.find("th");
+            while key:
+                value = key.find_next_sibling("td")
+                data.append({"title": key.renderContents().decode().replace("\xa0"," "), "value": value.text})
+                key = value.find_next_sibling("th")
+            #data.append(row)
+        return data
+        
+#Conditions: https://weather.gc.ca/marine/incs/weather_conditions_ajax.php?mapID=02&siteID=06400&stationID=WAS&lang=e&page=cc
+# Pages: cc = current conditions
+#        p24hc = previous 24h conditions
+#    var page = function(){
+#    if(href()[0].indexOf('currentConditions') !== -1){
+#    return 'cc';
+#    }else if(href()[0].indexOf('24hrObsHistory') !== -1){
+#    return 'p24hc';
+#}else if(href()[0].indexOf('regionalSummary') !== -1){
+#return 'rs';
+#}else if(href()[0].indexOf('lightstation') !== -1){
+#return 'ls';
+#}
+#
+#return false;
+#};
+#
+#// sends an ajax request to weather_conditions_ajax.php
+#                            // on success, clear the weather conditions tab and load the returned html
+#$.ajax({
+#    type: 'GET',
+#    cache: false,
+#    url: '/marine/incs/weather_conditions_ajax.php?' + href()[1] + '&lang=' + lang + '&page=' + page(),
+#}).done(function(html){
+#    contentContainer.empty();
+#contentContainer.append(html);
+#
+#$('html, body').animate({ scrollTop : $('#weather-conditions-lnk').offset().top }, 'slow');
+#
+#var baseWidth = 590, \
+#                baseCoords = [];
+#
+#$('img[usemap]').each(function(){
+#    var thisImg = $(this), \
+#                   currentWidth = thisImg.width(), \
+#                                  offset = parseFloat((currentWidth / baseWidth).toFixed(4));
+#
+#$(thisImg.attr('usemap')).children().each(function(i){
+#    var thisArea = $(this);
+#
+#var coords = thisArea.attr('coords').split(',');
+#
+#baseCoords[i] = [
+#    coords[0],
+#    coords[1],
+#    coords[2],
+#];
+#
+#var x = Math.round(parseInt(baseCoords[i][0]) * offset), \
+#        y = Math.round(parseInt(baseCoords[i][1]) * offset);
+#
+#thisArea.attr('coords', x + ',' + y + ',' + baseCoords[i][2]);
+#});
+#});
+#});
