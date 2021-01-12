@@ -132,14 +132,16 @@ div.dashboardIp, div.marineArea
 
 div.dashboardTemp.readingWarning,
 div.dashboardHumidity.readingWarning,
-div.dashboardTimestamp.readingWarning
+div.dashboardTimestamp.readingWarning,
+div.readingWarning
 {
     color: #a95a00;
 }
 
 div.dashboardTemp.readingImportant,
 div.dashboardHumidity.readingImportant,
-div.dashboardTimestamp.readingImportant
+div.dashboardTimestamp.readingImportant,
+div.readingImportant
 {
     color: darkred; !important;
 }

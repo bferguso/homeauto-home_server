@@ -28,8 +28,8 @@ def home():
                               externalContent.getMarineForecast(externalContent.GEORGIA_SOUTH)]
     home_data["current_conditions"] = [externalContent.getMarineConditions(externalContent.PAM_ROCKS),
                                        externalContent.getMarineConditions(externalContent.POINT_ATKINSON),
-                                       externalContent.getMarineConditions(externalContent.HALIBUT_BANK)
-                                       ]
+                                       externalContent.getMarineConditions(externalContent.HALIBUT_BANK)]
+    home_data["tide_data"] = [externalContent.get_tides(externalContent.POINT_ATKINSON, datetime.date.today())]
     devices = []
 
     for device in last_devices:
@@ -78,7 +78,7 @@ def hourlySummary():
     locationscsv = request.args.get('locations')
     dao = HomeServerDao()
     if locationscsv:
-        locations = map(lambda a: {'sensor_location': a.strip()}, locationscsv.encode('ascii','ignore').split(','))
+        locations = map(lambda a: {'sensor_location': a.strip().decode('ascii')}, locationscsv.encode('ascii', 'ignore').split(b','))
     else:
         locations = dao.getLocationsInPeriod()
     times = dao.getHourlyTimes()
@@ -95,7 +95,7 @@ def dailySummary():
     dao = HomeServerDao()
     times = dao.getDailyTimes()
     if locationscsv:
-        locations = map(lambda a: {'sensor_location': a.strip()}, locationscsv.encode('ascii','ignore').split(','))
+        locations = map(lambda a: {'sensor_location': a.strip().decode('ascii')}, locationscsv.encode('ascii','ignore').split(b','))
     else:
         locations = dao.getLocationsInPeriod()
     env_summary = {}

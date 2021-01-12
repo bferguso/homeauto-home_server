@@ -8,14 +8,19 @@
     <!-- Optional theme -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-theme.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/ferginzey.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/Chart.min.css') }}"/>
 
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
     <!-- Latest compiled and minified JavaScript -->
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/ferginzey.js') }}"></script>
 
+    <!-- ChartJS -->
+    <script src="{{ url_for('static', filename='js/Chart.bundle.min.js') }}"></script>
+
     <script>
         $().ready(function () {
+            $("div.forecastTitle:contains('WARNING')").addClass("readingWarning");
             var value;
             $("div.dashboardHumidity").each(function() {
                 value = parseFloat($(this).text());
@@ -39,6 +44,40 @@
                 if (value < warningTime && value > errorTime) { flagReading($(this), "readingWarning"); }
                 else if (value < errorTime) { flagReading($(this), "readingImportant");}
             });
+            tideChartsDiv = $("#tideChartsDiv");
+            // Repeat
+            stationId = "{{home_data.tide_data[0].station_id}}";
+            tideChartsDiv.append('<div>{{home_data.tide_data[0].location}} (ft)</div>');
+            tideChartsDiv.append("<div style='max-width: 600px'><canvas id='tides"+stationId+"' ></canvas></div>");
+            ctx = $("#tides"+stationId);
+            var tideChart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    datasets: [{
+                            label: "height (ft)",
+                            data: [{% for tide_entry in home_data.tide_data[0].tide_entries %}{% if (loop.index0 != 0) %}, {% endif %}{'x': new Date('{{ tide_entry.time }}'), 'y': {{ tide_entry.height_ft }} }{% endfor %}],
+                            borderWidth: 1,
+                            borderColor: 'rgba(10,90,255,.5)',
+                            backgroundColor: 'rgba(10,90,255,.1)'
+        }],
+                },
+                options: {
+                    legend: {
+                        show: false
+                    },
+                    scales: {
+                        xAxes: [{
+                            type: 'time',
+                            time: {
+                                displayFormats: {
+                                    'hour': 'D MMM HH:00'
+                                }
+                            }
+                        }]
+                    }
+                }
+            });
+            // End Repeat
         });
 
         var flagReading = function(field, warningClass)
@@ -85,7 +124,7 @@
     <div class="nav_link"><a href="/homeServer/dailySummary">Daily Summary</a></div>
 </div>
 <hr>
-<div>Current Readings <div class="sectionToggle" style="display: inline;" title="Show/Hide inactive locations" onclick="toggleInactiveLocations();"><i class="glyphicon glyphicon-eye-close"></i></div></div>
+<div>Current Interior Readings <div class="sectionToggle" style="display: inline;" title="Show/Hide inactive locations" onclick="toggleInactiveLocations();"><i class="glyphicon glyphicon-eye-close"></i></div></div>
 
 <div class="dashboardContainer">
     {% for location in home_data.devices %}
@@ -148,6 +187,11 @@
         {% endfor %}
     </div>
     {% endfor %}
+</div>
+<hr>
+
+<div id="tideChartsDiv" class="marineConditions">
+    <div style="font-size: medium">Tide information</div>
 </div>
 </body>
 </html>
