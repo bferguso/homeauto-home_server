@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Ferginzeys' Home - Local Weather</title>
+    <!-- Latest compiled and minified CSS -->
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-theme.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ferginzey.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/Chart.min.css') }}"/>
+
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ferginzey.js') }}"></script>
+
+    <!-- ChartJS -->
+    <script src="{{ url_for('static', filename='js/Chart.bundle.min.js') }}"></script>
+
+    <script>
+        $().ready(function () {
+            $("div.forecastTitle:contains('WARNING')").addClass("readingWarning");
+            var value;
+
+            tideChartsDiv = $("#tideChartsDiv");
+            // Repeat
+            {% for tide_data in weather_data.tide_data %}
+            stationId = "{{tide_data.station_id}}";
+            tideChartsDiv.append('<div>{{tide_data.location}}</div>');
+            tideChartsDiv.append("<div style='max-width: 600px'><canvas id='tides"+stationId+"' ></canvas></div>");
+            ctx = $("#tides"+stationId);
+            var tideChart = new Chart(ctx, {
+                type: "line",
+                data: {
+                    datasets: [{
+                            label: "height (ft)",
+                            data: [{% for tide_entry in tide_data.tide_entries %}{% if (loop.index0 != 0) %}, {% endif %}{'x': new Date('{{ tide_entry.time }}'), 'y': {{ tide_entry.height_ft }} }{% endfor %}],
+                            borderWidth: 1,
+                            borderColor: 'rgba(10,90,255,.5)',
+                            backgroundColor: 'rgba(10,90,255,.1)'
+        }],
+                },
+                options: {
+                    legend: {
+                        show: false
+                    },
+                    scales: {
+                        xAxes: [{
+                            type: 'time',
+                            time: {
+                                displayFormats: {
+                                    'hour': 'D MMM HH:00'
+                                }
+                            }
+                        }]
+                    }
+                }
+            });
+            {% endfor %}
+            // End Repeat
+        });
+    </script>
+</head>
+<body>
+<div class="ferginzey_title">Ferginzeys' Home Data</div>
+<div class="nav_links">
+    <div class="nav_link"><a href="/homeServer">Home</a></div>
+    <div class="nav_link"><a href="/homeServer/hourlySummary">Hourly Summary</a></div>
+    <div class="nav_link"><a href="/homeServer/dailySummary">Daily Summary</a></div>
+</div>
+<hr>
+<div>Marine Weather</div>
+<div class="dashboardContainer">
+    {% for forecast in weather_data.forecasts %}
+    <div class="dashboardItem marineForecast">
+        <div class="dashboardLocation marineLocation">{{forecast.location}}</div>
+        {% for forecastEntry in forecast.forecastEntries %}
+        <div class="marineForecastEntry">
+            <div class="forecastTitle">{{forecastEntry.title}}</div>
+            <div class="forecastText">{{forecastEntry.summary | safe}}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+    {% for condition in weather_data.current_conditions %}
+    <div class="dashboardItem marineConditions">
+        <div class="marineLocation">
+            <div class="dashboardLocation">{{condition.station}}</div>
+            <div class="marineArea">{{condition.location}}</div>
+        </div>
+        {% for conditionEntry in condition.conditionEntries %}
+        <div class="marineConditionsEntry {%if (loop.index0 % 2 == 0) %}rowEven {% else %} rowOdd {% endif %}">
+           <div class="dashboardHumidity">{{conditionEntry.title | safe}}</div>
+           <div class="dashboardPressure">{{conditionEntry.value | safe}}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
+<hr>
+
+<div id="tideChartsDiv" class="marineConditions">
+    <div style="font-size: medium">Tide information (ft)</div>
+</div>
+</body>
+</html>

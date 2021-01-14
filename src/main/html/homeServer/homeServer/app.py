@@ -24,13 +24,6 @@ def home():
     dao = HomeServerDao()
     last_devices = dao.getLastSeenDevices()
     home_data = {}
-    home_data["forecasts"] = [externalContent.getMarineForecast(externalContent.HOWE_SOUND),
-                              externalContent.getMarineForecast(externalContent.GEORGIA_SOUTH)]
-    home_data["current_conditions"] = [externalContent.getMarineConditions(externalContent.PAM_ROCKS),
-                                       externalContent.getMarineConditions(externalContent.POINT_ATKINSON),
-                                       externalContent.getMarineConditions(externalContent.HALIBUT_BANK)]
-    home_data["tide_data"] = [externalContent.get_tides(externalContent.POINT_ATKINSON, datetime.date.today()),
-                              externalContent.get_tides(externalContent.GIBSONS, datetime.date.today())]
     devices = []
 
     for device in last_devices:
@@ -44,6 +37,17 @@ def home():
         devices.append(new_device)
     home_data["devices"] = devices
     return render_template("home.html", home_data=home_data)
+
+@app.route('/wx')
+def weather():
+    weather_data = {"forecasts": [externalContent.getMarineForecast(externalContent.HOWE_SOUND),
+                                  externalContent.getMarineForecast(externalContent.GEORGIA_SOUTH)],
+                    "current_conditions": [externalContent.getMarineConditions(externalContent.PAM_ROCKS),
+                                           externalContent.getMarineConditions(externalContent.POINT_ATKINSON),
+                                           externalContent.getMarineConditions(externalContent.HALIBUT_BANK)],
+                    "tide_data": [externalContent.get_tides(externalContent.POINT_ATKINSON, datetime.date.today()),
+                                  externalContent.get_tides(externalContent.GIBSONS, datetime.date.today())]}
+    return render_template("weather.html", weather_data=weather_data)
 
 @app.route('/inventory')
 def getinventory():
