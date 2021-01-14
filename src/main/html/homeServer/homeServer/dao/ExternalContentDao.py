@@ -8,7 +8,6 @@ class ExternalContentDao:
     def __init__(self):
         pass
 
-
     # Forecast Locations
     HOWE_SOUND = "HOWE_SOUND"
     GEORGIA_NORTH = "GEORGIA_NORTH"
@@ -19,6 +18,7 @@ class ExternalContentDao:
     POINT_ATKINSON = "POINT_ATKINSON"
     ENGLISH_BAY = "ENGLISH_BAY"
     HALIBUT_BANK = "HALIBUT_BANK"
+    GIBSONS = "GIBSONS"
 
     URLS = {
         "FORECAST": "https://weather.gc.ca/rss/marine/{area}_e.xml",

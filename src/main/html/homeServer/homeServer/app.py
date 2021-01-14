@@ -29,7 +29,8 @@ def home():
     home_data["current_conditions"] = [externalContent.getMarineConditions(externalContent.PAM_ROCKS),
                                        externalContent.getMarineConditions(externalContent.POINT_ATKINSON),
                                        externalContent.getMarineConditions(externalContent.HALIBUT_BANK)]
-    home_data["tide_data"] = [externalContent.get_tides(externalContent.POINT_ATKINSON, datetime.date.today())]
+    home_data["tide_data"] = [externalContent.get_tides(externalContent.POINT_ATKINSON, datetime.date.today()),
+                              externalContent.get_tides(externalContent.GIBSONS, datetime.date.today())]
     devices = []
 
     for device in last_devices:

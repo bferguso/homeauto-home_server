@@ -46,8 +46,9 @@
             });
             tideChartsDiv = $("#tideChartsDiv");
             // Repeat
-            stationId = "{{home_data.tide_data[0].station_id}}";
-            tideChartsDiv.append('<div>{{home_data.tide_data[0].location}} (ft)</div>');
+            {% for tide_data in home_data.tide_data %}
+            stationId = "{{tide_data.station_id}}";
+            tideChartsDiv.append('<div>{{tide_data.location}}</div>');
             tideChartsDiv.append("<div style='max-width: 600px'><canvas id='tides"+stationId+"' ></canvas></div>");
             ctx = $("#tides"+stationId);
             var tideChart = new Chart(ctx, {
@@ -55,7 +56,7 @@
                 data: {
                     datasets: [{
                             label: "height (ft)",
-                            data: [{% for tide_entry in home_data.tide_data[0].tide_entries %}{% if (loop.index0 != 0) %}, {% endif %}{'x': new Date('{{ tide_entry.time }}'), 'y': {{ tide_entry.height_ft }} }{% endfor %}],
+                            data: [{% for tide_entry in tide_data.tide_entries %}{% if (loop.index0 != 0) %}, {% endif %}{'x': new Date('{{ tide_entry.time }}'), 'y': {{ tide_entry.height_ft }} }{% endfor %}],
                             borderWidth: 1,
                             borderColor: 'rgba(10,90,255,.5)',
                             backgroundColor: 'rgba(10,90,255,.1)'
@@ -77,6 +78,7 @@
                     }
                 }
             });
+            {% endfor %}
             // End Repeat
         });
 
@@ -191,7 +193,7 @@
 <hr>
 
 <div id="tideChartsDiv" class="marineConditions">
-    <div style="font-size: medium">Tide information</div>
+    <div style="font-size: medium">Tide information (ft)</div>
 </div>
 </body>
 </html>
