@@ -13,25 +13,34 @@ class HomeServerDao:
     def get_connection(self):
         return psycopg2.connect("dbname="+self.database+" user="+self.user+" password="+self.password)
 
-    def logDeviceSeen(self, cur, envData):
-        cur.execute("select * from public.ha_remote_devices where sensor_location = %s and remote_address =  %s;"
-                    , (envData['location'], envData['remote_address']))
-        if cur.rowcount == 0:
-            cur.execute("insert into public.ha_remote_devices (sensor_location, remote_address, last_seen_timestamp ) values( %s, %s, current_timestamp );"
-                        , (envData['location'], envData['remote_address']))
-        else:
-            cur.execute("update public.ha_remote_devices set last_seen_timestamp = current_timestamp where sensor_location = %s and remote_address =  %s;"
-                        , (envData['location'], envData['remote_address']))
-
-    def saveEnvironmentLog(self, envData):
+    def set_device_active(self, location_name, ip_address, active):
         conn = self.get_connection()
         cur = conn.cursor()
-        pressure = envData['pressure'] if 'pressure' in envData else 0.00
-        alt = envData['alt'] if 'alt' in envData else 0.00
-        heatIndex = envData['heatIndex'] if 'heatIndex' in envData else 0.00
+        cur.execute("update public.ha_remote_devices set device_active = %s where sensor_location = %s and remote_address =  %s;"
+                    , (active, location_name, ip_address))
+        conn.commit()
+        cur.close()
+        conn.close()
+
+    def logDeviceSeen(self, cur, env_data):
+        cur.execute("select * from public.ha_remote_devices where sensor_location = %s and remote_address =  %s;"
+                    , (env_data['location'], env_data['remote_address']))
+        if cur.rowcount == 0:
+            cur.execute("insert into public.ha_remote_devices (sensor_location, remote_address, last_seen_timestamp ) values( %s, %s, current_timestamp );"
+                        , (env_data['location'], env_data['remote_address']))
+        else:
+            cur.execute("update public.ha_remote_devices set last_seen_timestamp = current_timestamp where sensor_location = %s and remote_address =  %s;"
+                        , (env_data['location'], env_data['remote_address']))
+
+    def saveEnvironmentLog(self, env_data):
+        conn = self.get_connection()
+        cur = conn.cursor()
+        pressure = env_data['pressure'] if 'pressure' in env_data else 0.00
+        alt = env_data['alt'] if 'alt' in env_data else 0.00
+        heatIndex = env_data['heatIndex'] if 'heatIndex' in env_data else 0.00
         cur.execute("insert into public.ha_environment_log(sensor_location,temperature,humidity, pressure, altitude, heat_index) values (%s, %s, %s, %s, %s, %s);"
-                    , (envData['location'], envData['temp'], envData['humidity'], pressure, alt, heatIndex))
-        self.logDeviceSeen(cur, envData)
+                    , (env_data['location'], env_data['temp'], env_data['humidity'], pressure, alt, heatIndex))
+        self.logDeviceSeen(cur, env_data)
         conn.commit()
         cur.close()
         conn.close()
@@ -72,7 +81,7 @@ class HomeServerDao:
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cur.execute("""
             select distinct date_trunc('hour', sample_timestamp) sample_timestamp
-                from ha_environment_log
+                from public.ha_environment_log
                 where sample_timestamp > date_trunc('day', (current_timestamp - INTERVAL '1 day'))
                 order by sample_timestamp;
                 """)
@@ -86,7 +95,7 @@ class HomeServerDao:
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cur.execute("""
             select distinct date_trunc('day', sample_timestamp) sample_timestamp
-                from ha_environment_log
+                from public.ha_environment_log
                 where sample_timestamp > date_trunc('day', (current_timestamp - INTERVAL '14 day'))
                 order by sample_timestamp;
                 """)
@@ -100,7 +109,7 @@ class HomeServerDao:
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cur.execute("""
             select distinct sensor_location
-                from ha_environment_log
+                from public.ha_environment_log
                 where sample_timestamp > date_trunc('day', (current_timestamp - INTERVAL '1 day'))
                 order by sensor_location;
                 """)
@@ -114,7 +123,7 @@ class HomeServerDao:
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cur.execute("""
         with all_hours as ( select distinct date_trunc('hour', sample_timestamp) sample_timestamp
-                    from ha_environment_log
+                    from public.ha_environment_log
                     where sample_timestamp > date_trunc('day', (current_timestamp - INTERVAL '1 day'))
                     order by sample_timestamp),
          env_data as (
@@ -125,7 +134,7 @@ class HomeServerDao:
                round(sum(humidity)/count(*),2) humidity,
                round(sum(pressure)/count(*),2) pressure,
                round(sum(altitude)/count(*),2) altitude 
-         from ha_environment_log
+         from public.ha_environment_log
          where  sensor_location = %(location)s 
          and ha_environment_log.sample_timestamp  > date_trunc('day', (current_timestamp - INTERVAL '1 day'))
          group by sensor_location, date_trunc('hour', sample_timestamp)
@@ -151,7 +160,7 @@ class HomeServerDao:
         cur.execute("""
             with all_days as (
             select distinct date_trunc('day', sample_timestamp) sample_timestamp
-                from ha_environment_log
+                from public.ha_environment_log
                 where sample_timestamp > date_trunc('day', (current_timestamp - INTERVAL '14 day'))
                 order by sample_timestamp),
      env_data as (                
@@ -167,7 +176,7 @@ class HomeServerDao:
                round(min(pressure),2) min_pressure,
                round(max(pressure),2) max_pressure,
                round(avg(pressure),2) avg_pressure
-            from ha_environment_log
+            from public.ha_environment_log
             where sample_timestamp > date_trunc('day', (current_timestamp - INTERVAL '14 day'))
             and sensor_location = %(location)s
             group by sensor_location, date_trunc('day', sample_timestamp) order by sample_timestamp , sensor_location)

@@ -21,64 +21,105 @@
     <script>
         $().ready(function () {
             var value;
-            $("div.dashboardHumidity").each(function() {
+            $("div.dashboardHumidity").each(function () {
                 value = parseFloat($(this).text());
-                if (value > 55 && value < 60) { flagReading($(this), "readingWarning"); }
-                else if (value >= 60) { flagReading($(this), "readingImportant"); }
+                if (value > 55 && value < 60) {
+                    flagReading($(this), "readingWarning");
+                } else if (value >= 60) {
+                    flagReading($(this), "readingImportant");
+                }
             });
-            $("div.dashboardTemp").each(function() {
+            $("div.dashboardTemp").each(function () {
                 value = parseFloat($(this).text());
-                if (value < 5 && value > 0) { flagReading($(this), "readingWarning"); }
-                else if (value <= 0) { flagReading($(this), "readingImportant"); }
+                if (value < 5 && value > 0) {
+                    flagReading($(this), "readingWarning");
+                } else if (value <= 0) {
+                    flagReading($(this), "readingImportant");
+                }
             });
 
             var warningTime = new Date();
-            warningTime.setHours(warningTime.getHours() -1);
+            warningTime.setHours(warningTime.getHours() - 1);
             var errorTime = new Date();
-            errorTime.setDate(errorTime.getDate() -1);
+            errorTime.setDate(errorTime.getDate() - 1);
 
-            $("div.dashboardTimestamp").each(function() {
+            $("div.dashboardTimestamp").each(function () {
                 value = new Date($(this).text().replace(/\..*$/, ""));
 
-                if (value < warningTime && value > errorTime) { flagReading($(this), "readingWarning"); }
-                else if (value < errorTime) { flagReading($(this), "readingImportant");}
+                if (value < warningTime && value > errorTime) {
+                    flagReading($(this), "readingWarning");
+                } else if (value < errorTime) {
+                    flagReading($(this), "readingImportant");
+                }
             });
         });
 
-        var flagReading = function(field, warningClass)
-        {
+        var flagReading = function (field, warningClass) {
             field.addClass(warningClass);
             field.closest("div.dashboardItem").addClass(warningClass);
         }
-        
-        var updateSensorLocation = function (ipAddress) {
-            var newLocation = $("#sensorLocationText_" + ipAddress).val();
+        var showMessage = function(div, message) {
+            var msgDiv = $("#"+div);
+            msgDiv.hide();
+            msgDiv.text(message);
+            msgDiv.fadeIn(500, function() {
+               msgDiv.fadeOut(2000)
+            });
+        }
+
+        var markSensorActive = function (locationName, ipAddress, checkbox) {
+            var enable_data = {
+                "location_name": locationName,
+                "ip_address": ipAddress,
+                "active": !$(checkbox).is(":checked")
+            };
+            $.ajax({
+                method: "POST",
+                url: "http://cabin.local/homeServer/markSensorActive",
+                data: enable_data,
+                success: function (data) {
+                    console.log(data);
+                    if (data.success)
+                    {
+                        showMessage("successMessage", "Successfully updated station state to "+(enable_data.active? "active" : "inactive"));
+                    }
+                    else
+                    {
+                        showMessage("errorMessage", "Unable to update station state "+data.message);
+                    }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.log("Ajax call failed: " + textStatus + ": " + errorThrown);
+                    showMessage("errorMessage", "Unable to update station state: "+textStatus + ": " + errorThrown);
+                }
+            });
+        }
+
+        var updateSensorLocation = function (ipAddress, textId) {
+            var newLocation = $("#" + textId).val();
+            console.log("New location for IP "+ipAddress+": "+newLocation);
             $.ajax({
                 method: "GET",
                 url: "http://" + ipAddress + "/updateConfig?physicalLocation=" + newLocation,
                 success: function (msg) {
                     console.log(msg);
-                    $("#resultMessage").text(msg);
+                    showMessage("successMessage", msg);
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
                     console.log("Ajax call failed: " + textStatus + ": " + errorThrown);
-                    alert("Unable to update location.");
+                    showMessage("errorMessage", "Unable to update location: "+textStatus + ": " + errorThrown);
                 }
             });
         }
 
-        var toggleInactiveLocations = function()
-        {
-           $("div.dashboardItem.active_False").each(function() {
-               if ($(this).is(":visible"))
-               {
-                   $(this).hide();
-               }
-               else
-               {
-                   $(this).show();
-               }
-           });
+        var toggleInactiveLocations = function () {
+            $("div.dashboardItem.active_False").each(function () {
+                if ($(this).is(":visible")) {
+                    $(this).hide();
+                } else {
+                    $(this).show();
+                }
+            });
         }
     </script>
 </head>
@@ -90,13 +131,19 @@
     <div class="nav_link"><a href="/homeServer/wx">Weather Forecasts & Conditions</a></div>
 </div>
 <hr>
-<div>Current Interior Readings <div class="sectionToggle" style="display: inline;" title="Show/Hide inactive locations" onclick="toggleInactiveLocations();"><i class="glyphicon glyphicon-eye-close"></i></div></div>
-
+<div>Current Interior Readings
+    <div class="sectionToggle" style="display: inline;" title="Show/Hide inactive locations"
+         onclick="toggleInactiveLocations();"><i class="glyphicon glyphicon-eye-close"></i></div>
+</div>
+<div id="successMessage" class="messageSuccess" style="display: none;"></div>
+<div id="errorMessage" class="messageError" style="display: none;"></div>
 <div class="dashboardContainer">
     {% for location in home_data.devices %}
-    <div class="dashboardItem active_{{location.device_active}}" {%if not location.device_active %} style="display: none;" {%endif%}>
+    {% set ip_label = location.remote_address | replace(".","_") %}
+    <div class="dashboardItem active_{{location.device_active}}" {%if not location.device_active %} style="display: none;" {% endif %}>
         <div style="margin-top: -5px">
-            <div class="dashboardLocation"><a href="hourlySummary?locations={{location.sensor_location}}">{{location.sensor_location}}</a></div>
+            <div class="dashboardLocation"><a href="hourlySummary?locations={{location.sensor_location}}">{{location.sensor_location}}</a>
+            </div>
             <div class="dashboardIp">{{location.remote_address}}</div>
         </div>
         <div class="dashboardTemp">{{location.last_reading.temperature}}&deg;C</div>
@@ -105,23 +152,30 @@
             <div class="dashboardPressure">{{location.last_reading.pressure/10}} kPa</div>
         </div>
         <div class="smallDarkGray">Last seen:
-            <div class="dashboardTimestamp">{{location.last_seen_timestamp}} </div>
-            <div class="dashboardActive">({{location.device_active}})</div>
+            <div class="dashboardTimestamp">{{location.last_seen_timestamp}}</div>
+            <div class="dashboardActive"><input type="checkbox" name="inactiveStation" title="Station inactive?"
+                                                onClick="markSensorActive('{{location.sensor_location}}', '{{location.remote_address}}', this);"
+                                                value="inactive" {%if not location.device_active %}checked{% endif %}/>
+            </div>
         </div>
-        <div style="font-size: xx-small;" class="sectionToggle" onclick="toggleVisibility('config_{{location.remote_address | replace(".","_")}}')">Update Config
-    </div>
-    <div id="config_{{ location.remote_address| replace(".","_")}}" class="configControls" style="display: none;">
+        {% if location.device_active %}
+        <div style="font-size: xx-small;" class="sectionToggle"
+             onclick="toggleVisibility('config_{{ ip_label }}_{{ location.sensor_location }}')">Update Config</div>
+    <div id="config_{{ ip_label }}_{{ location.sensor_location }}" class="configControls" style="display: none;">
     <hr style="border-bottom: 5px;">
     <div>
-        <input id="sensorLocationText_{{location.remote_address}}" type="text" value="{{location.sensor_location}}"/>
+        <label for="sensorLocationText_{{ ip_label }}" class="configLabel">Name</label>
+        <input id="sensorLocationText_{{ ip_label }}" type="text" value="{{location.sensor_location}}" size="18"/>
+        <span><i class="glyphicon glyphicon-refresh clickable" onclick="updateSensorLocation('{{location.remote_address}}', 'sensorLocationText_{{ ip_label }}');"></i></span>
     </div>
-    <div>
+    <!--div>
         <input id="publishHost_{{location.remote_address}}" type="text" value="{{location.remote_address}}"/>
     </div>
     <div>
         <input id="publishUrl_{{location.remote_address}}" type="text" size="30" value="/homeServer/logEnv?envJson="/>
-    </div>
-    </div>
+    </div-->
+</div>
+{% endif %}
 </div>
 {% endfor %}
 </div>

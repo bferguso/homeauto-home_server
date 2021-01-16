@@ -9,7 +9,6 @@ import datetime
 import decimal
 app = Flask(__name__)
 app.debug = True
-app.filename = "/var/www/html/log/environment.log"
 externalContent = ExternalContentDao()
 
 def verify_token(password):
@@ -61,22 +60,37 @@ def getinventory():
     return resp
 
 @app.route('/logEnv')
-def logEnv():
+def log_env():
     obj = json.loads(request.args.get('envJson'))
     obj['date'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     obj['remote_address'] = request.remote_addr
-#    file1 = open(app.filename, "a")
-#    file1.write(json.dumps(obj))
-#    file1.write("\n")
-#    file1.close();
     obj['status']="success"
     resp = Response(response=json.dumps(obj),
                     status=200,
                     mimetype="application/json")
     dao = HomeServerDao()
     dao.saveEnvironmentLog(obj)
-
     return resp
+
+
+@app.route('/markSensorActive', methods=["POST"])
+def mark_sensor_active():
+    location = request.values.get('location_name')
+    remote_address = request.values.get("ip_address")
+    active_str = request.values.get("active")
+    if not location or not remote_address or not active_str:
+        print("location: "+str(location)+", remote_address: "+str(remote_address)+", active_str: "+str(active_str))
+        return Response(response=json.dumps({"success": False}),
+                    status=400,
+                    mimetype="application/json")
+    active = active_str.lower() == 'true'
+    print("Active? "+str(active))
+    dao = HomeServerDao()
+    dao.set_device_active(location, remote_address, active)
+    return Response(response=json.dumps({'success': True}),
+                    status=200,
+                    mimetype="application/json")
+
 
 @app.route('/hourlySummary')
 def hourlySummary():
