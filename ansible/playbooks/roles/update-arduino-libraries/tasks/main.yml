@@ -1,0 +1,26 @@
+---
+- command: "ls {{dev_library_dir}}"
+  register: dev_library_root
+  when: debug is defined
+
+- name: "list dev libraries directory"
+  debug: var="{{ item }}"
+  with_items:
+    - dev_library_root.stdout_lines
+  when: debug is defined
+
+- command: "ls {{arduino_library_dir}}"
+  register: arduino_library_root
+  when: debug is defined
+
+- name: "list arduino libraries directory"
+  debug: var="{{ item }}"
+  with_items:
+    - arduino_library_root.stdout_lines
+  when: debug is defined
+
+- name: "update custom libraries to arduino libraries directory"
+  copy:
+    src: "{{ dev_library_dir }}/"
+    dest: "{{ arduino_library_dir }}/"
+  delegate_to: 127.0.0.1

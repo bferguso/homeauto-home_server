@@ -1,0 +1,11 @@
+---
+- name: Deploy Ferginzey Home Automation Server
+  hosts: localhost
+  gather_facts: no
+#  vars:
+#     debug: True
+
+  roles:
+    # prepare the installation environment by creating the necessary folders
+    - name: update-arduino-libraries
+
