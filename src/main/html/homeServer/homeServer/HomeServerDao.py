@@ -29,7 +29,7 @@ class HomeServerDao:
             cur.execute("insert into public.ha_remote_devices (sensor_location, remote_address, last_seen_timestamp ) values( %s, %s, current_timestamp );"
                         , (env_data['location'], env_data['remote_address']))
         else:
-            cur.execute("update public.ha_remote_devices set last_seen_timestamp = current_timestamp where sensor_location = %s and remote_address =  %s;"
+            cur.execute("update public.ha_remote_devices set last_seen_timestamp = current_timestamp, device_active=true where sensor_location = %s and remote_address =  %s;"
                         , (env_data['location'], env_data['remote_address']))
 
     def saveEnvironmentLog(self, env_data):
@@ -38,8 +38,12 @@ class HomeServerDao:
         pressure = env_data['pressure'] if 'pressure' in env_data else 0.00
         alt = env_data['alt'] if 'alt' in env_data else 0.00
         heatIndex = env_data['heatIndex'] if 'heatIndex' in env_data else 0.00
-        cur.execute("insert into public.ha_environment_log(sensor_location,temperature,humidity, pressure, altitude, heat_index) values (%s, %s, %s, %s, %s, %s);"
+        if not 'sample_timestamp' in env_data or not env_data['sample_timestamp']:
+            cur.execute("insert into public.ha_environment_log(sensor_location,temperature,humidity, pressure, altitude, heat_index) values (%s, %s, %s, %s, %s, %s);"
                     , (env_data['location'], env_data['temp'], env_data['humidity'], pressure, alt, heatIndex))
+        else:
+            cur.execute("insert into public.ha_environment_log(sensor_location,temperature,humidity, pressure, altitude, heat_index, sample_timestamp) values (%s, %s, %s, %s, %s, %s, %s);"
+                    , (env_data['location'], env_data['temp'], env_data['humidity'], pressure, alt, heatIndex, env_data['sample_timestamp']))
         self.logDeviceSeen(cur, env_data)
         conn.commit()
         cur.close()

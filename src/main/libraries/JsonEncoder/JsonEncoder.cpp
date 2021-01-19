@@ -37,6 +37,13 @@ String JsonEncoder::encodeValue(String key, int value)
     return encodeQuoteString(key)+":"+value;
 }
 
+String JsonEncoder::encodeValue(String key, unsigned long value)
+{
+    char buf[50];
+    ltoa(value, buf, 10);
+    return encodeQuoteString(key)+":"+buf;
+}
+
 String JsonEncoder::encodeValue(String key, float value)
 {
     return encodeQuoteString(key)+":"+value;
@@ -55,6 +62,13 @@ String JsonEncoder::wrapValue(String key, String value)
 String JsonEncoder::wrapValue(String key, int value)
 {
     return quoteString(key)+":"+value;
+}
+
+String JsonEncoder::wrapValue(String key, unsigned long value)
+{
+    char buf[50];
+    ltoa(value, buf, 10);
+    return quoteString(key)+":"+buf;
 }
 
 String JsonEncoder::wrapValue(String key, float value)

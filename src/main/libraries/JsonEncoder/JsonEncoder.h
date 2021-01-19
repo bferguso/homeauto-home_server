@@ -21,10 +21,12 @@ public:
     static String encodeQuoteString(String value);
     static String encodeValue(String key, String value);
     static String encodeValue(String key, int value);
+    static String encodeValue(String key, unsigned long value);
     static String encodeValue(String key, float value);
     static String encodeValue(String key, bool value);
     static String wrapValue(String key, String value);
     static String wrapValue(String key, int value);
+    static String wrapValue(String key, unsigned long value);
     static String wrapValue(String key, float value);
     static String wrapValue(String key, bool value);
     static String append(String valueToAppend);

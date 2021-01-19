@@ -1,6 +1,7 @@
 from flask import request
 from flask import Flask, render_template
 from flask import Response
+import time
 from homeServer.HomeServerDao import HomeServerDao
 from homeServer.dao.ExternalContentDao import ExternalContentDao
 
@@ -71,6 +72,36 @@ def log_env():
     dao = HomeServerDao()
     dao.saveEnvironmentLog(obj)
     return resp
+
+@app.route('/logBufferedEnv', methods=["POST"])
+def log_buffered_env():
+    before = int(round(time.time() * 1000))
+    dao = HomeServerDao()
+    # Get this first to be as close to the sender millis as possible
+    reference_time = datetime.datetime.now()
+    request_data = request.get_json()
+
+    # Number of readings persisted to the database
+    saved_readings = 0
+
+    if 'batch' in request_data and request_data['batch']:
+        reference_millis = int(request_data['referenceMillis'])
+        remote_address = request.remote_addr
+        env_readings = request_data['envReadings']
+        for reading in env_readings:
+            reading['sample_timestamp'] = reference_time + datetime.timedelta(milliseconds=(int(reading['millisOffset']) - reference_millis))
+            reading['remote_address'] = remote_address
+            dao.saveEnvironmentLog(reading)
+            saved_readings += 1
+
+    obj = {"date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+           "status": "success",
+           "savedReadings": saved_readings}
+    after = int(round(time.time() * 1000))
+    print("Save of "+str(saved_readings)+" records took "+str((after-before)/1000)+" seconds.")
+    return Response(response=json.dumps(obj),
+                    status=200,
+                    mimetype="application/json")
 
 
 @app.route('/markSensorActive', methods=["POST"])

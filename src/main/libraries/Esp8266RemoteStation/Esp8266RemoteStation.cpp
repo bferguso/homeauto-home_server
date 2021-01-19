@@ -1,3 +1,4 @@
+#include <ESP8266HTTPClient.h>
 #include <ESP8266WiFi.h>
 #include <ESP8266WebServer.h>
 #include <EnvData.h>
@@ -7,9 +8,11 @@
 Esp8266RemoteStation::Esp8266RemoteStation(String physicalLocation) {
     _lastEnvSent = 0;
     _lastEnvPrinted = 0;
+    _lastBufferFlush = 0;
     _httpPort = 80;
-    _sendInterval = 15000;
-    _printInterval = 5000;
+    _sendInterval = _defaultSendInterval;
+    _printInterval = _defaultPrintInterval;
+    _bufferInterval = _defaultBufferInterval;
     _physicalLocation = physicalLocation;
     Serial.begin(9600);
 }
@@ -61,6 +64,7 @@ String Esp8266RemoteStation::getConfig() {
            + JsonEncoder::wrapValue("location", _physicalLocation)
            + JsonEncoder::append(JsonEncoder::wrapValue("sendInterval", _sendInterval))
            + JsonEncoder::append(JsonEncoder::wrapValue("printInterval", _printInterval))
+           + JsonEncoder::append(JsonEncoder::wrapValue("bufferInterval", _bufferInterval))
            + JsonEncoder::append(JsonEncoder::wrapValue("httpPort", _httpPort))
            + JsonEncoder::append(JsonEncoder::wrapValue("envPublishHost", _envPublishHost))
            + JsonEncoder::append(JsonEncoder::wrapValue("envPublishUrl", _envPublishUrl))
@@ -88,8 +92,10 @@ void Esp8266RemoteStation::callbackWrapper(RemoteServerCallback *callback) {
 }
 
 void Esp8266RemoteStation::updateConfig() {
+    int status = 200;
     Serial.println(_server.args());
-    String message = "";
+    String messages = "";
+    bool didUpdate = false;
     for (short i = 0; i < _server.args(); i++) {
         Serial.print(_server.argName(i));
         Serial.print(" : ");
@@ -97,26 +103,48 @@ void Esp8266RemoteStation::updateConfig() {
     }
     if (_server.hasArg("envPublishHost")) {
         _envPublishHost = _server.arg("envPublishHost");
-        message = message + "Set envPublishHost to " + _envPublishHost + "\n";
+        messages = messages + JsonEncoder::quoteString("Set envPublishHost to " + _envPublishHost);
+        didUpdate = true;
     }
     if (_server.hasArg("envPublishUrl")) {
         _envPublishUrl = _server.arg("envPublishUrl");
-        message = message + "Set envPublishUrl to " + _envPublishUrl + "\n";
+        if (didUpdate) { messages = messages + JsonEncoder::valueSeparator; }
+        messages = messages + JsonEncoder::quoteString("Set envPublishUrl to " + _envPublishUrl);
+        didUpdate = true;
     }
     if (_server.hasArg("physicalLocation")) {
         _physicalLocation = _server.arg("physicalLocation");
-        message = message + "Set physicalLocation to " + _physicalLocation + "\n";
+        if (didUpdate) { messages = messages + JsonEncoder::valueSeparator; }
+        messages = messages + JsonEncoder::quoteString("Set physicalLocation to " + _physicalLocation);
+        didUpdate = true;
     }
     if (_server.hasArg("sendInterval")) {
-        _sendInterval = _server.arg("sendInterval").toInt();
-        message = message + "Set sendInterval to " + _sendInterval + "\n";
+        setSendInterval(_server.arg("sendInterval").toInt());
+        if (didUpdate) { messages = messages + JsonEncoder::valueSeparator; }
+        messages = messages + JsonEncoder::quoteString("Set sendInterval to " + String(_sendInterval));
+        didUpdate = true;
     }
     if (_server.hasArg("printInterval")) {
         _printInterval = _server.arg("printInterval").toInt();
-        message = message + "Set sendInterval to " + _printInterval + "\n";
+        if (didUpdate) { messages = messages + JsonEncoder::valueSeparator; }
+        messages = messages + JsonEncoder::quoteString("Set printInterval to " + String(_printInterval));
+        didUpdate = true;
+    }
+    if (_server.hasArg("bufferInterval")) {
+        if (didUpdate) { messages = messages + JsonEncoder::valueSeparator; }
+        if (setBufferInterval(_server.arg("bufferInterval").toInt()))
+        {
+            messages = messages + JsonEncoder::quoteString("Set bufferInterval to "+String(_bufferInterval));
+        }
+        else
+        {
+            status = 400;
+            messages = messages + JsonEncoder::quoteString("Unable to set bufferInterval to "+_server.arg("bufferInterval"));
+        }
+        didUpdate = true;
     }
     _server.sendHeader("Access-Control-Allow-Origin", "*");
-    _server.send(200, "text/plain", message);
+    _server.send(status, "application/json", "{"+JsonEncoder::quoteString("messages")+":["+messages+"]}");
 }
 
 String Esp8266RemoteStation::getHelpMessage() {
@@ -128,12 +156,13 @@ String Esp8266RemoteStation::getHelpMessage() {
            "                envPublishUrl    : URL to publish to\n" +
            "                sendInterval     : Number of milliseconds between publishing environment\n" +
            "                printInterval    : Number of milliseconds between printing environment to Serial\n" +
+           "                bufferInterval   : Number of milliseconds to buffer readings before sending to server\n" +
            "                eg: /updateConfig?physicalLocation=mech_rm&envPublishHost=192.168.102.110\n";
 }
 
 void Esp8266RemoteStation::sendEnv(EnvData data) {
     // If we haven't hit the interval time yet bypass send
-    if ((millis() - _lastEnvSent) < _sendInterval) {
+    if (!readyToSendEnv()) {
         return;
     }
 
@@ -171,8 +200,7 @@ void Esp8266RemoteStation::sendEnv(EnvData data) {
     Serial.println("closing connection");
 }
 
-String Esp8266RemoteStation::sendHttpRequest(char *host, int port, String request) {
-    // Use WiFiClient class to create TCP connections
+String Esp8266RemoteStation::sendHttpRequest(String host, int port, String request) { // Use WiFiClient class to create TCP connections
     WiFiClient client;
 
     if (!client.connect(host, port)) {
@@ -215,7 +243,7 @@ bool Esp8266RemoteStation::readyToPrint() {
 
 void Esp8266RemoteStation::printEnv(EnvData data) {
     // If we haven't hit the interval time yet bypass send
-    if ((millis() - _lastEnvPrinted) < _printInterval) {
+    if (!readyToPrint()) {
         return;
     }
 
@@ -239,13 +267,25 @@ void Esp8266RemoteStation::printEnv(EnvData data) {
     Serial.println();
 }
 
-String Esp8266RemoteStation::getEnvJson(EnvData data) {
+String Esp8266RemoteStation::getEnvJsonEncoded(EnvData data) {
     return JsonEncoder::encodedOpenBrace
            + JsonEncoder::encodeValue("location", _physicalLocation)
            + JsonEncoder::append(JsonEncoder::encodeValue("temp", data.temperature))
            + JsonEncoder::append(JsonEncoder::encodeValue("humidity", data.humidity))
            + JsonEncoder::append(JsonEncoder::encodeValue("pressure", data.pressure))
            + JsonEncoder::append(JsonEncoder::encodeValue("heatIndex", data.heatIndex))
+           + JsonEncoder::append(JsonEncoder::encodeValue("millisOffset", data.millisOffset))
            + JsonEncoder::encodedCloseBrace;
+}
+
+String Esp8266RemoteStation::getEnvJson(EnvData data) {
+    return JsonEncoder::openBrace
+           + JsonEncoder::wrapValue("location", _physicalLocation)
+           + JsonEncoder::append(JsonEncoder::wrapValue("temp", data.temperature))
+           + JsonEncoder::append(JsonEncoder::wrapValue("humidity", data.humidity))
+           + JsonEncoder::append(JsonEncoder::wrapValue("pressure", data.pressure))
+           + JsonEncoder::append(JsonEncoder::wrapValue("heatIndex", data.heatIndex))
+           + JsonEncoder::append(JsonEncoder::wrapValue("millisOffset", data.millisOffset))
+           + JsonEncoder::closeBrace;
 }
 
