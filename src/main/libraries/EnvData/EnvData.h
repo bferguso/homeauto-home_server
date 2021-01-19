@@ -9,6 +9,7 @@ class EnvData {
       EnvData();
       EnvData(float temp, float humid, float press);
       EnvData(float temp, float humid, float press, float alt, float heatIdx);
+      unsigned long millisOffset = 0;
       float temperature = 0.0;
       float humidity = 0.0;
       float pressure = 0.0;

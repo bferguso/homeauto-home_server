@@ -168,36 +168,114 @@ void Esp8266RemoteStation::sendEnv(EnvData data) {
 
     // Now update the last timestamp we tried to send
     _lastEnvSent = millis();
+    if (!bufferEnabled())
+    {
+        Serial.println("Buffer not enabled.");
+        sendEnvToServer(data);
+    }
+    else
+    {
+        // First flush the buffer if it's full
+        if (shouldFlushBuffer())
+        {
+            flushBufferedEnvData();
+        }
 
-    // Use WiFiClient class to create TCP connections
-    WiFiClient client;
+        // Then try to buffer the data
+        if (!bufferEnvData(&data))
+        {
+            sendEnvToServer(data);
+        }
+    }
+}
 
+void Esp8266RemoteStation::sendEnvToServer(EnvData data)
+{
     Serial.print("Trying to send to ");
     Serial.println(_envPublishHost);
     Serial.println(_envPublishUrl);
-    if (!client.connect(_envPublishHost, _httpPort)) {
-        Serial.println("Connection failed :(");
+    String url = _envPublishUrl + getEnvJsonEncoded(data);
+    String response = sendHttpRequest(_envPublishHost, 80, url);
+    Serial.println(response);
+}
+
+void Esp8266RemoteStation::setSendInterval(int sendInterval)
+{
+    _sendInterval = sendInterval;
+}
+
+/*
+ * EnvData Buffering logic
+ */
+bool Esp8266RemoteStation::setBufferInterval(int bufferInterval)
+{
+    Serial.println("Checking if buffer should be flushed");
+    if (!_envQueue.isEmpty())
+    {
+        Serial.println("Trying to flush buffer");
+        flushBufferedEnvData();
+    }
+
+    // Create a new queue if we have to increase the size
+    if (((int)(bufferInterval/_sendInterval))+1 <= _maxQueueSize )
+    {
+        _bufferInterval = bufferInterval;
+        Serial.println("New buffer interval set to: "+String(_bufferInterval));
+        return true;
+    }
+    else
+    {
+        Serial.println("New buffer interval is too large for max buffer size: "+
+        String((int)(bufferInterval/_sendInterval)+1)+" > "+String(_maxQueueSize));
+        return false;
+    }
+}
+
+bool Esp8266RemoteStation::bufferEnabled()
+{
+    return _bufferInterval > 1000 && _bufferInterval > _sendInterval;
+}
+
+bool Esp8266RemoteStation::shouldFlushBuffer()
+{
+    return bufferEnabled() && (_envQueue.isFull() || (millis() - _lastBufferFlush) > _bufferInterval);
+}
+
+bool Esp8266RemoteStation::bufferEnvData(EnvData *data)
+{
+
+    if (shouldFlushBuffer())
+    {
+        Serial.println("Should be flushing, not buffering");
+        return false;
+    }
+    if (!_envQueue.isInitialized())
+    {
+        Serial.println("Queue is not initialized");
+        return false;
+    }
+    Serial.println("Current buffer size "+String(_envQueue.getCount()));
+    data->millisOffset = millis();
+    _envQueue.push(data);
+    Serial.println("New buffer size "+String(_envQueue.getCount()));
+    return true;
+}
+
+void Esp8266RemoteStation::flushBufferedEnvData()
+{
+    if (_bufferInterval == 0 || _envQueue.isEmpty())
+    {
+        Serial.println("Not trying to flush buffer");
         return;
-    } else {
-        Serial.println("Connected!");
     }
-    String url = _envPublishUrl + getEnvJson(data);
-    Serial.println("Sending url " + url);
-
-    client.print(String("GET ") + url + " HTTP/1.1\r\n" +
-                 "Host: " + _envPublishHost + "\r\n" +
-                 "Connection: close\r\n\r\n");
-    delay(500);
-
-    Serial.println("Before read...");
-    // Read all the lines of the reply from server and print them to Serial
-    while (client.available()) {
-        String line = client.readStringUntil('\r');
-        Serial.print(line);
+    Serial.println("Trying to flush buffer");
+    String data = getBufferedEnvJson();
+    if (data)
+    {
+        String *response = sendHttpPost(_envPublishHost, 80, _envPublishBufferedUrl, &data);
     }
-    Serial.println("After read...");
-    Serial.println();
-    Serial.println("closing connection");
+
+    _lastBufferFlush = millis();
 }
 
 String Esp8266RemoteStation::sendHttpRequest(String host, int port, String request) { // Use WiFiClient class to create TCP connections
@@ -220,13 +298,39 @@ String Esp8266RemoteStation::sendHttpRequest(String host, int port, String reque
     while (client.available()) {
         String line = client.readStringUntil('\r');
         Serial.print(line);
-        response = response + line;
+        response += line;
     }
     Serial.println("");
     Serial.println("After read...");
     Serial.println();
     Serial.println("closing connection");
     return response;
+}
+
+String* Esp8266RemoteStation::sendHttpPost(String host, int port, String url, String* payload) {
+    // Use WiFiClient class to create TCP connections
+    WiFiClient client;
+
+    if (!client.connect(host, port)) {
+        Serial.println("connection failed");
+        return false;
+    }
+    Serial.println("Connected!");
+
+    HTTPClient http;
+    Serial.println("Connecting to "+host+url);
+    http.begin("http://"+host+url);
+    http.addHeader("Content-Type", "application/json");
+    auto httpCode = http.POST(*payload);
+    Serial.println(httpCode);
+    delay(500);
+    String responseString = http.getString();
+    Serial.println(responseString);
+    Serial.println("");
+    Serial.println("After POST...");
+    Serial.println();
+    Serial.println("closing connection");
+    return &responseString;
 }
 
 void Esp8266RemoteStation::handleClient() {
@@ -289,3 +393,38 @@ String Esp8266RemoteStation::getEnvJson(EnvData data) {
            + JsonEncoder::closeBrace;
 }
 
+String Esp8266RemoteStation::getBufferedEnvJson()
+{
+    String payload;
+    EnvData data;
+    String jsonEntry;
+
+    if (_bufferInterval == 0 || _envQueue.isEmpty())
+    {
+        return F("");
+    }
+
+    payload = JsonEncoder::openBrace;
+    payload += JsonEncoder::wrapValue("batch", true);
+    payload += JsonEncoder::valueSeparator;
+    payload += JsonEncoder::wrapValue("referenceMillis", millis());
+    payload += JsonEncoder::valueSeparator;
+    payload += JsonEncoder::quoteString("envReadings");
+    payload += F(":");
+    payload += F("[");
+    bool first = true;
+    Serial.println("Size of queue: "+String(_envQueue.getCount()));
+    while (_envQueue.pop(&data))
+    {
+        if (! first )
+        {
+            payload += JsonEncoder::valueSeparator;
+        }
+        jsonEntry = getEnvJson(data);
+        payload += jsonEntry;
+        first = false;
+    }
+    payload += F("]");
+    payload += JsonEncoder::closeBrace;
+    return payload;
+}
