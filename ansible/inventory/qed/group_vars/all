@@ -1,0 +1,14 @@
+
+artifactory_url: "http://apps.nrs.gov.bc.ca/pub/artifactory"
+run_user: "www-data"
+install_user: "www-data"
+sw_home: "/sw_ux"
+apps_home: "/apps_ux"
+cd_apps_home: "/apps_ux"
+apps_data: "/apps_data"
+cd_apps_data: "/apps_data"
+apps_logs: "{{ apps_data }}/logs"
+cd_apps_logs: "{{ apps_data }}/logs"
+tmp_artifact_cache: "/tmp/artifact-cache"
+download_timeout: 100
+java_home: "{{ sw_home }}/java/1.8.x"

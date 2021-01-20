@@ -1,0 +1,195 @@
+body {
+    color: #333;
+    padding-left: 100px;
+    padding-right: 100px;
+}
+
+div.number {
+    text-align: right;
+}
+
+
+div.ferginzey_title {
+    padding-top: 10px;
+    padding-bottom: 5px;
+    font-size: larger;
+    font-weight: bold;
+    color: #333;
+}
+
+div.latest_reading {
+    background: lightgrey;
+}
+
+div.env_reading_title {
+    font-weight: bold;
+}
+
+div.env_reading {
+    margin-left: 15px;
+}
+
+div.env_title {
+    display: inline-block;
+    font-weight: bold;
+    min-width: 90px;
+}
+
+div.env_value {
+    display: inline-block;
+}
+
+div.sectionToggle, .clickable {
+    margin-top: 5px;
+    cursor: pointer;
+    color: #337ab7;
+}
+
+div.messageSuccess {
+    color: #3c763d;
+}
+
+div.messageError {
+    color: darkred;
+}
+
+/* Dashboard classes */
+div.dashboardContainer {
+    display: flex;
+    flex-wrap: wrap;
+    flex-grow: 0;
+}
+
+@media only screen and (max-width: 600px)
+{
+    div.dashboardItem {
+        flex: 50%;
+    }
+}
+
+@media only screen and (min-width: 600px)
+{
+    div.dashboardItem {
+        flex: 20%;
+    }
+}
+
+/* CFSWeb Dashboard classes */
+div.dashboardItem {
+    border: solid thin black;
+    border-radius: 5px;
+    background-color: #cecece;
+    display: flex;
+    flex-direction: column;
+    flex-grow: 0;
+    flex-wrap: nowrap;
+    width: 80%;
+    margin: 5px;
+    -webkit-column-break-inside: avoid;
+    padding: 5px;
+    box-sizing: border-box;
+    line-height: 0.9;
+}
+
+div.dashboardItem.readingWarning {
+    border-width: 2px;
+    border-color: #a95a00;
+}
+
+div.dashboardItem.readingImportant {
+    border-width: 2px;
+    border-color: darkred; !important;
+}
+
+div.dashboardItem hr {
+    margin-bottom: 5px;
+    margin-top: 10px;
+}
+
+div.dashboardTemp
+{
+    font-size: xx-large;
+    text-align: center;
+}
+
+div.dashboardHumidity
+{
+    display: inline-block;
+    float: left;
+}
+
+div.dashboardPressure, div.dashboardActive
+{
+    display: inline-block;
+    float: right;
+}
+
+div.dashboardLocation
+{
+    display: inline-block;
+    font-size: small;
+    font-weight: bold;
+    vertical-align: text-top;
+}
+
+div.dashboardTimestamp, div.dashboardActive, div.dashboardIp, div.smallDarkGray, div.marineArea
+{
+    display: inline-block;
+    font-size: x-small;
+    color: #757575;
+    white-space: nowrap;
+}
+
+div.dashboardIp, div.marineArea
+{
+    float: right;
+}
+
+div.dashboardTemp.readingWarning,
+div.dashboardHumidity.readingWarning,
+div.dashboardTimestamp.readingWarning,
+div.forecastTitle.readingWarning
+{
+    color: #a95a00;
+}
+
+div.dashboardTemp.readingImportant,
+div.dashboardHumidity.readingImportant,
+div.dashboardTimestamp.readingImportant,
+div.readingImportant
+{
+    color: darkred; !important;
+}
+
+label.configLabel
+{
+    font-weight: normal;
+    font-size: small;
+}
+
+/* Forecast classes */
+
+div.marineForecast, div.marineConditions {
+    line-height: 1.1;
+    font-size: smaller;
+}
+
+div.marineForecastEntry {
+    margin-bottom: 10px;
+}
+
+div.forecastTitle {
+    font-weight: bold;
+}
+
+div.forecastText {
+    padding-left: 3px;
+}
+
+div.marineLocation {
+    margin-bottom: 5px;
+}
+
+div.rowEven {
+    background-color: rgba(255,255,255, .4);
+}

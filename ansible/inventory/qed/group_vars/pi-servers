@@ -1,0 +1,52 @@
+artifactory_username: bferguso
+artifactory_password:
+
+s6_enabled:                       no
+s6_home:                          '/sw_ux/s6'
+s6_services:                      '/apps_ux/s6_services'
+
+# cd_project: CFSWEB
+# cd_component: cfsweb-war
+# cd_version: 6.0.0
+# connector_port: "8180"
+cd_apps_home: /apps_ux
+cd_apps_data: /apps_data
+cd_apps_logs: '{{ cd_apps_data }}/logs'
+
+log_level: DEBUG
+
+# # Security plugin properties file
+# oauth2_token_url: "https://i1auth.nrs.gov.bc.ca/pub/webade-oauth2/oauth/token?disableDeveloperFilter=false"
+# cwms_rest_url: "https://i1api.nrs.gov.bc.ca/cwm-cwms-api/v1/"
+#
+# # JNDI datasources
+# jndi_resources:
+#   - name: "geotools/ilrrpub"
+#     type: "org.geotools.arcsde.session.ISessionPool"
+#     props:
+#       - { factory: org.geotools.arcsde.jndi.ArcSDEConnectionFactory }
+#       - { server: totem.bcgov }
+#       - { user: PROXY_ILRR_GS_PUB }
+#       - { password: "{{ proxy_ilrr_gs_pub_password }}" }
+#       - { instance: ilrdlv }
+#       - { port: 5165 }
+#       - { initialSize: 2 }
+#       - { maxActive: 16 }
+#       - { maxWait: 500 }
+#       - { minEvictableIdleTimeMillis: 2700000 }
+#       - { timeBetweenEvictionRunsMillis: 300000 }
+#   - name: "geotools/ilrrsec"
+#     type: "org.geotools.arcsde.session.ISessionPool"
+#     props:
+#       - { factory: org.geotools.arcsde.jndi.ArcSDEConnectionFactory }
+#       - { server: totem.bcgov }
+#       - { user: PROXY_ILRR_GS_SEC }
+#       - { password: "{{ proxy_ilrr_gs_sec_password }}" }
+#       - { instance: ilrdlv }
+#       - { port: 5165 }
+#       - { initialSize: 2 }
+#       - { maxActive: 16 }
+#       - { maxWait: 500 }
+#       - { minEvictableIdleTimeMillis: 2700000 }
+#       - { timeBetweenEvictionRunsMillis: 300000 }
+#

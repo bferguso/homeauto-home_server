@@ -1,0 +1,145 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Ferginzeys' Home - Hourly Environment Data</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-theme.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ferginzey.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/Chart.min.css') }}"/>
+
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/ferginzey.js') }}"></script>
+
+    <!-- ChartJS -->
+    <script src="{{ url_for('static', filename='js/Chart.bundle.min.js') }}"></script>
+
+    <script>
+        $().ready(function (){
+        var ctx = $('#myChart');
+        var myChart = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: [ {% for time in times%}{%if (loop.index0 != 0)%},{% endif %} "{{time['sample_timestamp'].strftime('%H:%M')}}"{% endfor %} ],
+                datasets: [
+                    {% for location in env_summary %}
+                    {
+                    label: '{{location}} Temp',
+                    data: [
+                        {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %}  {%if envrow.temperature is not none %} {{envrow.temperature}} {% endif %} {% endfor %}
+                    ],
+                    borderWidth: 1,
+                    fill: false,
+                    pointStyle: getPointStyle('temperature'),
+                    borderColor: getLocationColour('{{location}}'),
+                    yAxisID: 'temperature-y-axis'
+                    },
+            {
+                label: '{{location}} Humidity',
+                    data: [
+                      {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %} {%if envrow.humidity is not none %} {{envrow.humidity}}{% endif %}{% endfor %}
+                    ],
+                    borderWidth: 1,
+                    fill: false,
+                    pointStyle: getPointStyle('humidity'),
+                    borderColor: getLocationColour('{{location}}'),
+                    yAxisID: 'humidity-y-axis'
+            },
+            {% if (env_summary[location]| map(attribute='pressure') | unique | list ) != [0.0] %}
+            {
+                label: '{{ location }} Pressure',
+                    data: [
+                {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %} {%if envrow.humidity is not none %}{{envrow.pressure}}{% endif %}{% endfor %}
+                ],
+                borderWidth: 1,
+                fill: false,
+                pointStyle: getPointStyle('pressure'),
+                borderColor: getLocationColour('{{location}}'),
+                yAxisID: 'pressure-y-axis'
+
+            },
+            {% endif %}
+            {%endfor%}
+        ]
+        },
+            options: {
+                scales: {
+                    yAxes: [
+                        {
+                        id: 'temperature-y-axis',
+                        ticks: {
+                            suggestedMin: 10,
+                            suggestedMax: 50,
+                            // beginAtZero: true
+                        }
+                    },
+                        {
+                            id: 'humidity-y-axis',
+                            ticks: {
+                                suggestedMin: 40,
+                                suggestedMax: 70,
+                                // beginAtZero: true
+                            }
+                        }
+                        {% if (env_summary[location]| map(attribute='pressure') | unique | list ) != [0.0] %}
+                        ,{
+                            id: 'pressure-y-axis',
+                            position: 'right',
+                            ticks: {
+                                suggestedMin: 900,
+                                suggestedMax: 1030,
+                                // beginAtZero: true
+                            }
+                        }
+                        {% endif %}
+                    ]
+                }
+            }
+        });
+        });
+    </script>
+</head>
+<body>
+<div class="ferginzey_title">Ferginzeys' Hourly Summary</div>
+<div class="nav_links">
+    <div class="nav_link"><a href="/homeServer/">Home Page</a></div>
+    <div class="nav_link"><a href="/homeServer/dailySummary">Daily Summary</a></div>
+</div>
+<hr>
+<div>
+    <h3>Hourly Temperature Summary</h3>
+    <canvas id="myChart" width="400" height="250"></canvas>
+</div>
+<hr>
+<a href="#" onclick="toggleVisibility('rawDataTable');">Show Data</a>
+<div id="rawDataTable" class="table active" style="padding-left: 100px; display: none;">
+    <div class="row">
+        <div class="col-sm-1">Location</div>
+        <div class="col-sm-2 number">Sample Time</div>
+        <div class="col-sm-1 number"># Samples</div>
+        <div class="col-sm-1 number">Temperature</div>
+        <div class="col-sm-1 number">Humidity</div>
+        <div class="col-sm-1 number">Pressure</div>
+        <div class="col-sm-1 number">Altitude</div>
+    </div>
+    {% for location in env_summary|sort %}
+    {% for envrow in env_summary[location] %}
+    <div class="row{% if not envrow.reading_count %} latest_reading{%endif%}">
+        <div class="col-sm-1">{{envrow.sensor_location}}</div>
+        <div class="col-sm-2 number">{{envrow.sample_timestamp.strftime('%Y-%m-%d %H:%M:%S')}}</div>
+        <div class="col-sm-1 number">{{envrow.reading_count}}</div>
+        <div class="col-sm-1 number">{{envrow.temperature}}</div>
+        <div class="col-sm-1 number">{{envrow.humidity}}%</div>
+        <div class="col-sm-1 number">{% if envrow.pressure %}{{envrow.pressure}}{% endif %}</div>
+        <div class="col-sm-1 number">{% if envrow.altitude %}{{envrow.altitude}}m{% endif %}</div>
+    </div>
+    {% endfor %}
+    {% endfor %}
+
+</div>
+</body>
+</html>

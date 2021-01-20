@@ -1,0 +1,21 @@
+---
+# defaults file for cd-prepare
+
+######################
+# Required properties
+######################
+# Because this role advertises a tight integration with Jenkins (essentially a dependency),
+# it uses the provided variables directly instead of proxying them
+# cd_component
+
+# Allow component name to be optionally overriden, such as when there are
+# two instances of an app on one server and a single component name would
+# cause directory name conflicts.
+cd_component_name:  "{{ cd_component }}"
+cd_app_root:        "/var/www/html"
+cd_app_install:        "{{ cd_app_root }}/{{ cd_component_name }}"
+cd_app_home:        "{{ cd_app_root }}/{{ cd_component_name }}"
+
+# Generic properties
+cdprep_become:            "{{ install_user }}"
+cdprep_mode:              '0775'
