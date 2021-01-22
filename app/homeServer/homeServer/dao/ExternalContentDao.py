@@ -78,7 +78,7 @@ class ExternalContentDao:
         station = self.__getInfoForLocation(station_name, self.TIDE_STATION_IDS)
         tide_data = {"location": station["display_name"], "station_id": station["id"], "timezone": "PST", "tide_entries": []}
         url = self.URLS["TIDES"].replace("{station_id}", station["id"]).replace("{date}", urllib.parse.quote(start_date.strftime(self.TIDE_DATE_FORMAT)))
-        print("Getting url: "+url)
+        # print("Getting url: "+url)
         response = urllib.request.urlopen(url)
         raw_data = response.read()
         encoding = response.info().get_content_charset('utf8')
@@ -111,7 +111,7 @@ class ExternalContentDao:
 
         tide_lines = soup.find("div", "stationTextData").find_all("div")
 
-        print(tide_lines)
+        # print(tide_lines)
         for tide_line in tide_lines:
             text = tide_line.renderContents().decode()
             parts = text.strip().split(";")
@@ -120,7 +120,7 @@ class ExternalContentDao:
                 data.append(tide_entry)
             else:
                 print("Unknown tide data format "+tide_line)
-        print(data)
+        # print(data)
         return data
 
 #Conditions: https://weather.gc.ca/marine/incs/weather_conditions_ajax.php?mapID=02&siteID=06400&stationID=WAS&lang=e&page=cc

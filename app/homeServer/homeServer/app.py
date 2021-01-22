@@ -2,7 +2,7 @@ from flask import request
 from flask import Flask, render_template
 from flask import Response
 import time
-from homeServer.HomeServerDao import HomeServerDao
+from homeServer.dao.HomeServerDao import HomeServerDao
 from homeServer.dao.ExternalContentDao import ExternalContentDao
 
 import simplejson as json

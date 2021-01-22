@@ -27,8 +27,10 @@
             // Repeat
             {% for tide_data in weather_data.tide_data %}
             stationId = "{{tide_data.station_id}}";
-            tideChartsDiv.append('<div>{{tide_data.location}}</div>');
-            tideChartsDiv.append("<div style='max-width: 600px'><canvas id='tides"+stationId+"' ></canvas></div>");
+            tideDiv = $("<div style='display: block'></div>")
+            tideDiv.append('<div>{{tide_data.location}}</div>');
+            tideDiv.append("<div style='max-width: 600px'><canvas id='tides"+stationId+"' ></canvas></div>");
+            tideChartsDiv.append(tideDiv);
             ctx = $("#tides"+stationId);
             var tideChart = new Chart(ctx, {
                 type: "line",
@@ -72,27 +74,29 @@
 <hr>
 <div>Marine Weather</div>
 <div class="dashboardContainer">
+    {% for condition in weather_data.current_conditions %}
+        <div class="dashboardItem marineConditions">
+            <div class="marineLocation">
+                <div class="dashboardLocation">{{condition.station}}</div>
+                <div class="marineArea">{{condition.location}}</div>
+            </div>
+            {% for conditionEntry in condition.conditionEntries %}
+                <div class="marineConditionsEntry {%if (loop.index0 % 2 == 0) %}rowEven {% else %} rowOdd {% endif %}">
+                    <div class="dashboardHumidity">{{conditionEntry.title | safe}}</div>
+                    <div class="dashboardPressure">{{conditionEntry.value | safe}}</div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+</div>
+<div class="dashboardContainer">
     {% for forecast in weather_data.forecasts %}
-    <div class="dashboardItem marineForecast">
+    <div class="dashboardItem marineForecast" style="flex-grow: 1;">
         <div class="dashboardLocation marineLocation">{{forecast.location}}</div>
         {% for forecastEntry in forecast.forecastEntries %}
         <div class="marineForecastEntry">
             <div class="forecastTitle">{{forecastEntry.title}}</div>
             <div class="forecastText">{{forecastEntry.summary | safe}}</div>
-        </div>
-        {% endfor %}
-    </div>
-    {% endfor %}
-    {% for condition in weather_data.current_conditions %}
-    <div class="dashboardItem marineConditions">
-        <div class="marineLocation">
-            <div class="dashboardLocation">{{condition.station}}</div>
-            <div class="marineArea">{{condition.location}}</div>
-        </div>
-        {% for conditionEntry in condition.conditionEntries %}
-        <div class="marineConditionsEntry {%if (loop.index0 % 2 == 0) %}rowEven {% else %} rowOdd {% endif %}">
-           <div class="dashboardHumidity">{{conditionEntry.title | safe}}</div>
-           <div class="dashboardPressure">{{conditionEntry.value | safe}}</div>
         </div>
         {% endfor %}
     </div>
