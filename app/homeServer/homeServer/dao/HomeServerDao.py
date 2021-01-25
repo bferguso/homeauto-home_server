@@ -13,24 +13,36 @@ class HomeServerDao:
     def get_connection(self):
         return psycopg2.connect("dbname="+self.database+" user="+self.user+" password="+self.password)
 
-    def set_device_active(self, location_name, ip_address, active):
+    def set_node_active(self, location_name, ip_address, active):
         conn = self.get_connection()
         cur = conn.cursor()
-        cur.execute("update public.ha_remote_devices set device_active = %s where sensor_location = %s and remote_address =  %s;"
+        cur.execute("update public.ha_remote_devices set node_active = %s where node_location = %s and remote_address =  %s;"
                     , (active, location_name, ip_address))
         conn.commit()
         cur.close()
         conn.close()
 
     def logDeviceSeen(self, cur, env_data):
-        cur.execute("select * from public.ha_remote_devices where sensor_location = %s and remote_address =  %s;"
+        cur.execute("select * from public.ha_remote_devices where node_location = %s and remote_address =  %s;"
                     , (env_data['location'], env_data['remote_address']))
         if cur.rowcount == 0:
-            cur.execute("insert into public.ha_remote_devices (sensor_location, remote_address, last_seen_timestamp ) values( %s, %s, current_timestamp );"
+            cur.execute("insert into public.ha_remote_devices (node_location, remote_address, last_seen_timestamp ) values( %s, %s, current_timestamp );"
                         , (env_data['location'], env_data['remote_address']))
         else:
-            cur.execute("update public.ha_remote_devices set last_seen_timestamp = current_timestamp, device_active=true where sensor_location = %s and remote_address =  %s;"
+            cur.execute("update public.ha_remote_devices set last_seen_timestamp = current_timestamp, node_active=true where node_location = %s and remote_address =  %s;"
                         , (env_data['location'], env_data['remote_address']))
+
+    def register_node(self, capabilities, remote_address, node_name):
+        conn = self.get_connection()
+        cur = conn.cursor()
+        cur.execute("select * from public.ha_remote_devices where node_location = %s and remote_address =  %s;"
+                    , (node_name, remote_address))
+        if cur.rowcount == 0:
+            cur.execute("insert into public.ha_remote_devices (node_location, remote_address, last_seen_timestamp, node_capabilities_json) values( %s, %s, current_timestamp );"
+                        , (node_name, remote_address, capabilities))
+        else:
+            cur.execute("update public.ha_remote_devices set last_seen_timestamp = current_timestamp, node_capabilities_json = %s, node_active=true where node_location = %s and remote_address =  %s;"
+                        , (capabilities, node_name, remote_address))
 
     def saveEnvironmentLog(self, env_data):
         conn = self.get_connection()
@@ -39,10 +51,10 @@ class HomeServerDao:
         alt = env_data['alt'] if 'alt' in env_data else 0.00
         heatIndex = env_data['heatIndex'] if 'heatIndex' in env_data else 0.00
         if not 'sample_timestamp' in env_data or not env_data['sample_timestamp']:
-            cur.execute("insert into public.ha_environment_log(sensor_location,temperature,humidity, pressure, altitude, heat_index) values (%s, %s, %s, %s, %s, %s);"
+            cur.execute("insert into public.ha_environment_log(node_location,temperature,humidity, pressure, altitude, heat_index) values (%s, %s, %s, %s, %s, %s);"
                     , (env_data['location'], env_data['temp'], env_data['humidity'], pressure, alt, heatIndex))
         else:
-            cur.execute("insert into public.ha_environment_log(sensor_location,temperature,humidity, pressure, altitude, heat_index, sample_timestamp) values (%s, %s, %s, %s, %s, %s, %s);"
+            cur.execute("insert into public.ha_environment_log(node_location,temperature,humidity, pressure, altitude, heat_index, sample_timestamp) values (%s, %s, %s, %s, %s, %s, %s);"
                     , (env_data['location'], env_data['temp'], env_data['humidity'], pressure, alt, heatIndex, env_data['sample_timestamp']))
         self.logDeviceSeen(cur, env_data)
         conn.commit()
@@ -52,7 +64,7 @@ class HomeServerDao:
     def getLastSeenDevices(self):
         conn = self.get_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
-        cur.execute("select sensor_location, remote_address, last_seen_timestamp, device_active from public.ha_remote_devices order by last_seen_timestamp desc;");
+        cur.execute("select node_location, remote_address, last_seen_timestamp, node_active from public.ha_remote_devices order by last_seen_timestamp desc;");
         lastLog = cur.fetchall()
         cur.close()
         conn.close()
@@ -62,16 +74,16 @@ class HomeServerDao:
         conn = self.get_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cur.execute("""
-            select sensor_location,
+            select node_location,
                    temperature,
                    humidity, 
                    pressure,
                    sample_timestamp 
             from public.ha_environment_log
-            where sensor_location = %(location)s 
+            where node_location = %(location)s 
                 and sample_timestamp =
                     (select max(sample_timestamp) from public.ha_environment_log
-                        where sensor_location = %(location)s)
+                        where node_location = %(location)s)
             order by sample_timestamp desc;
         """,
                     {'location': location})
@@ -112,10 +124,10 @@ class HomeServerDao:
         conn = self.get_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cur.execute("""
-            select distinct sensor_location
+            select distinct node_location
                 from public.ha_environment_log
                 where sample_timestamp > date_trunc('day', (current_timestamp - INTERVAL '1 day'))
-                order by sensor_location;
+                order by node_location;
                 """)
         locations = cur.fetchall()
         cur.close()
@@ -131,7 +143,7 @@ class HomeServerDao:
                     where sample_timestamp > date_trunc('day', (current_timestamp - INTERVAL '1 day'))
                     order by sample_timestamp),
          env_data as (
-             select sensor_location,
+             select node_location,
                date_trunc('hour', sample_timestamp) sample_timestamp, 
                count(*) reading_count,
                round(sum(temperature)/count(*),2) temperature,
@@ -139,12 +151,12 @@ class HomeServerDao:
                round(sum(pressure)/count(*),2) pressure,
                round(sum(altitude)/count(*),2) altitude 
          from public.ha_environment_log
-         where  sensor_location = %(location)s 
+         where  node_location = %(location)s 
          and ha_environment_log.sample_timestamp  > date_trunc('day', (current_timestamp - INTERVAL '1 day'))
-         group by sensor_location, date_trunc('hour', sample_timestamp)
-         order by sensor_location, date_trunc('hour', sample_timestamp)) 
+         group by node_location, date_trunc('hour', sample_timestamp)
+         order by node_location, date_trunc('hour', sample_timestamp)) 
             select  all_hours.sample_timestamp,
-                        %(location)s sensor_location,
+                        %(location)s node_location,
                         env_data.reading_count,
                         env_data.temperature,
                         env_data.humidity,
@@ -168,7 +180,7 @@ class HomeServerDao:
                 where sample_timestamp > date_trunc('day', (current_timestamp - INTERVAL '14 day'))
                 order by sample_timestamp),
      env_data as (                
-            select sensor_location,
+            select node_location,
                date_trunc('day', sample_timestamp) sample_timestamp, 
                count(*) reading_count,
                round(min(temperature),2) min_temperature,
@@ -182,10 +194,10 @@ class HomeServerDao:
                round(avg(pressure),2) avg_pressure
             from public.ha_environment_log
             where sample_timestamp > date_trunc('day', (current_timestamp - INTERVAL '14 day'))
-            and sensor_location = %(location)s
-            group by sensor_location, date_trunc('day', sample_timestamp) order by sample_timestamp , sensor_location)
+            and node_location = %(location)s
+            group by node_location, date_trunc('day', sample_timestamp) order by sample_timestamp , node_location)
     select all_days.sample_timestamp,
-           %(location)s sensor_location,
+           %(location)s node_location,
            reading_count,
            min_temperature, max_temperature, avg_temperature,
            min_humidity, max_humidity, avg_humidity,

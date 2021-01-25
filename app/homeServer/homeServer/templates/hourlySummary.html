@@ -129,7 +129,7 @@
     {% for location in env_summary|sort %}
     {% for envrow in env_summary[location] %}
     <div class="row{% if not envrow.reading_count %} latest_reading{%endif%}">
-        <div class="col-sm-1">{{envrow.sensor_location}}</div>
+        <div class="col-sm-1">{{envrow.node_location}}</div>
         <div class="col-sm-2 number">{{envrow.sample_timestamp.strftime('%Y-%m-%d %H:%M:%S')}}</div>
         <div class="col-sm-1 number">{{envrow.reading_count}}</div>
         <div class="col-sm-1 number">{{envrow.temperature}}</div>

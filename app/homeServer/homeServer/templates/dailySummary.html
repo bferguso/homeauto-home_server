@@ -129,7 +129,7 @@
     {% for location in env_summary %}
     {% for envrow in env_summary[location] %}
     <div class="row">
-        <div class="col-sm-1 number">{{envrow.sensor_location}}</div>
+        <div class="col-sm-1 number">{{envrow.node_location}}</div>
         <div class="col-sm-2 number">{{envrow.sample_timestamp.strftime('%Y-%m-%d')}}</div>
         <div class="col-sm-1 number">{{envrow.min_temperature}}</div>
         <div class="col-sm-1 number">{{envrow.max_temperature}}</div>

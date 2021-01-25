@@ -140,9 +140,9 @@
 <div class="dashboardContainer">
     {% for location in home_data.devices %}
     {% set ip_label = location.remote_address | replace(".","_") %}
-    <div class="dashboardItem active_{{location.device_active}}" {%if not location.device_active %} style="display: none;" {% endif %}>
+    <div class="dashboardItem active_{{location.node_active}}" {%if not location.node_active %} style="display: none;" {% endif %}>
         <div style="margin-top: -5px">
-            <div class="dashboardLocation"><a href="hourlySummary?locations={{location.sensor_location}}">{{location.sensor_location}}</a>
+            <div class="dashboardLocation"><a href="hourlySummary?locations={{location.node_location}}">{{location.node_location}}</a>
             </div>
             <div class="dashboardIp">{{location.remote_address}}</div>
         </div>
@@ -154,18 +154,18 @@
         <div class="smallDarkGray">Last seen:
             <div class="dashboardTimestamp">{{location.last_seen_timestamp}}</div>
             <div class="dashboardActive"><input type="checkbox" name="inactiveStation" title="Station inactive?"
-                                                onClick="markSensorActive('{{location.sensor_location}}', '{{location.remote_address}}', this);"
-                                                value="inactive" {%if not location.device_active %}checked{% endif %}/>
+                                                onClick="markSensorActive('{{location.node_location}}', '{{location.remote_address}}', this);"
+                                                value="inactive" {%if not location.node_active %}checked{% endif %}/>
             </div>
         </div>
-        {% if location.device_active %}
+        {% if location.node_active %}
         <div style="font-size: xx-small;" class="sectionToggle"
-             onclick="toggleVisibility('config_{{ ip_label }}_{{ location.sensor_location }}')">Update Config</div>
-    <div id="config_{{ ip_label }}_{{ location.sensor_location }}" class="configControls" style="display: none;">
+             onclick="toggleVisibility('config_{{ ip_label }}_{{ location.node_location }}')">Update Config</div>
+    <div id="config_{{ ip_label }}_{{ location.node_location }}" class="configControls" style="display: none;">
     <hr style="border-bottom: 5px;">
     <div>
         <label for="sensorLocationText_{{ ip_label }}" class="configLabel">Name</label>
-        <input id="sensorLocationText_{{ ip_label }}" type="text" value="{{location.sensor_location}}" size="18"/>
+        <input id="sensorLocationText_{{ ip_label }}" type="text" value="{{location.node_location}}" size="18"/>
         <span><i class="glyphicon glyphicon-refresh clickable" onclick="updateSensorLocation('{{location.remote_address}}', 'sensorLocationText_{{ ip_label }}');"></i></span>
     </div>
     <!--div>
