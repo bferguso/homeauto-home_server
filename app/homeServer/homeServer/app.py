@@ -28,7 +28,7 @@ def home():
 
     for device in last_devices:
         new_device = {}
-        reading = dao.getLastEnvironmentLog(device['node_location'])
+        reading = dao.get_last_environment_log(device['node_location'])
         new_device['node_location'] = device['node_location']
         new_device['remote_address'] = device['remote_address']
         new_device['last_seen_timestamp'] = device['last_seen_timestamp']
@@ -61,13 +61,15 @@ def getinventory():
     return resp
 
 
-#@app.route('/registerNode')
-#def register_capabilities():
-#    capabilities = json.loads(request.values.get('capabilities'))
-#    node_location = request.values.get('location')
-#    data = {"capabilities": capabilities, 'remote_address': request.remote_addr,
-#            "node_location": node_location}
-#    dao.
+@app.route('/registerNode')
+def register_capabilities():
+    capabilities = json.loads(request.values.get('capabilities'))
+    node_location = request.values.get('location')
+    data = {"capabilities": capabilities, 'remote_address': request.remote_addr,
+            "location": node_location}
+    print(request.headers)
+    dao = HomeServerDao()
+    dao.register_node(data)
 
 
 @app.route('/logEnv')
@@ -80,7 +82,7 @@ def log_env():
                     status=200,
                     mimetype="application/json")
     dao = HomeServerDao()
-    dao.saveEnvironmentLog(obj)
+    dao.save_environment_log(obj)
     return resp
 
 
@@ -102,7 +104,7 @@ def log_buffered_env():
         for reading in env_readings:
             reading['sample_timestamp'] = reference_time + datetime.timedelta(milliseconds=(int(reading['millisOffset']) - reference_millis))
             reading['remote_address'] = remote_address
-            dao.saveEnvironmentLog(reading)
+            dao.save_environment_log(reading)
             saved_readings += 1
 
     obj = {"date": datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
@@ -141,12 +143,12 @@ def hourlySummary():
     if locationscsv:
         locations = map(lambda a: {'node_location': a.strip().decode('ascii')}, locationscsv.encode('ascii', 'ignore').split(b','))
     else:
-        locations = dao.getLocationsInPeriod()
-    times = dao.getHourlyTimes()
+        locations = dao.get_locations_in_period()
+    times = dao.get_hourly_times()
     env_summary = {}
     for location in locations:
-        location_summary = dao.getEnvironmentLogSummary(location['node_location'])
-        location_summary.append(dao.getLastEnvironmentLog(location['node_location']))
+        location_summary = dao.get_environment_log_summary(location['node_location'])
+        location_summary.append(dao.get_last_environment_log(location['node_location']))
         env_summary[location['node_location']] = location_summary
     return render_template("hourlySummary.html", locations=locations, times=times, env_summary=env_summary)
 
@@ -154,14 +156,14 @@ def hourlySummary():
 def dailySummary():
     locationscsv = request.args.get('locations')
     dao = HomeServerDao()
-    times = dao.getDailyTimes()
+    times = dao.get_daily_times()
     if locationscsv:
         locations = map(lambda a: {'node_location': a.strip().decode('ascii')}, locationscsv.encode('ascii','ignore').split(b','))
     else:
-        locations = dao.getLocationsInPeriod()
+        locations = dao.get_locations_in_period()
     env_summary = {}
     for location in locations:
-        env_summary[location['node_location']] = dao.getEnvironmentDailyLogSummary(location['node_location'])
+        env_summary[location['node_location']] = dao.get_environment_daily_log_summary(location['node_location'])
     return render_template("dailySummary.html", locations=locations, times=times, env_summary=env_summary)
 
 def convert_value(value):

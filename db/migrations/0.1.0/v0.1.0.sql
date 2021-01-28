@@ -14,8 +14,8 @@ create table homeauto.ha_environment_log (
     sample_timestamp timestamp default current_timestamp
 );
 
-create index ha_env_log_location_idx on ha_environment_log(sensor_location NULLS FIRST);
-create index ha_env_log_sample_time_idx on ha_environment_log(sample_timestamp NULLS FIRST);
+create index ha_env_log_location_idx on homeauto.ha_environment_log(sensor_location NULLS FIRST);
+create index ha_env_log_sample_time_idx on homeauto.ha_environment_log(sample_timestamp NULLS FIRST);
 
 create table homeauto.ha_remote_devices (
     remote_address varchar(15) not null,
