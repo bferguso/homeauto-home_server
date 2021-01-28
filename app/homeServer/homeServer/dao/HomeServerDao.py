@@ -13,16 +13,22 @@ class HomeServerDao:
     def get_connection(self):
         return psycopg2.connect("dbname="+self.database+" user="+self.user+" password="+self.password)
 
+    def get_cursor(self, connection):
+        cur = connection.cursor()
+        cur.execute("SET search_path TO " + self.user)
+        return cur
+
     def set_node_active(self, location_name, ip_address, active):
         conn = self.get_connection()
-        cur = conn.cursor()
+        cur = self.get_cursor(conn)
         cur.execute("update public.ha_remote_devices set node_active = %s where node_location = %s and remote_address =  %s;"
                     , (active, location_name, ip_address))
         conn.commit()
         cur.close()
         conn.close()
 
-    def logDeviceSeen(self, cur, env_data):
+
+    def log_device_seen(self, cur, env_data):
         cur.execute("select * from public.ha_remote_devices where node_location = %s and remote_address =  %s;"
                     , (env_data['location'], env_data['remote_address']))
         if cur.rowcount == 0:
@@ -34,7 +40,7 @@ class HomeServerDao:
 
     def register_node(self, capabilities, remote_address, node_name):
         conn = self.get_connection()
-        cur = conn.cursor()
+        cur = self.get_cursor(conn)
         cur.execute("select * from public.ha_remote_devices where node_location = %s and remote_address =  %s;"
                     , (node_name, remote_address))
         if cur.rowcount == 0:
@@ -46,7 +52,7 @@ class HomeServerDao:
 
     def saveEnvironmentLog(self, env_data):
         conn = self.get_connection()
-        cur = conn.cursor()
+        cur = self.get_cursor(conn)
         pressure = env_data['pressure'] if 'pressure' in env_data else 0.00
         alt = env_data['alt'] if 'alt' in env_data else 0.00
         heatIndex = env_data['heatIndex'] if 'heatIndex' in env_data else 0.00
@@ -56,12 +62,12 @@ class HomeServerDao:
         else:
             cur.execute("insert into public.ha_environment_log(node_location,temperature,humidity, pressure, altitude, heat_index, sample_timestamp) values (%s, %s, %s, %s, %s, %s, %s);"
                     , (env_data['location'], env_data['temp'], env_data['humidity'], pressure, alt, heatIndex, env_data['sample_timestamp']))
-        self.logDeviceSeen(cur, env_data)
+        self.log_device_seen(cur, env_data)
         conn.commit()
         cur.close()
         conn.close()
 
-    def getLastSeenDevices(self):
+    def get_last_seen_devices(self):
         conn = self.get_connection()
         cur = conn.cursor(cursor_factory=psycopg2.extras.DictCursor)
         cur.execute("select node_location, remote_address, last_seen_timestamp, node_active from public.ha_remote_devices order by last_seen_timestamp desc;");

@@ -22,7 +22,7 @@ def verify_token(password):
 @app.route('/')
 def home():
     dao = HomeServerDao()
-    last_devices = dao.getLastSeenDevices()
+    last_devices = dao.get_last_seen_devices()
     home_data = {}
     devices = []
 
@@ -60,6 +60,16 @@ def getinventory():
                     mimetype="application/json")
     return resp
 
+
+#@app.route('/registerNode')
+#def register_capabilities():
+#    capabilities = json.loads(request.values.get('capabilities'))
+#    node_location = request.values.get('location')
+#    data = {"capabilities": capabilities, 'remote_address': request.remote_addr,
+#            "node_location": node_location}
+#    dao.
+
+
 @app.route('/logEnv')
 def log_env():
     obj = json.loads(request.args.get('envJson'))
@@ -73,8 +83,6 @@ def log_env():
     dao.saveEnvironmentLog(obj)
     return resp
 
-#def register_capabilities():
-#    obj = json.loads(request.values.get('capabilities'))
 
 @app.route('/logBufferedEnv', methods=["POST"])
 def log_buffered_env():
