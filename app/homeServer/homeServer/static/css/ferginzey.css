@@ -118,7 +118,7 @@ div.dashboardHumidity
     float: left;
 }
 
-div.dashboardPressure, div.dashboardActive
+div.dashboardPressure, div.nodeControl
 {
     display: inline-block;
     float: right;

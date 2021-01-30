@@ -33,6 +33,7 @@ def home():
         new_device['remote_address'] = device['remote_address']
         new_device['last_seen_timestamp'] = device['last_seen_timestamp']
         new_device['node_active'] = device['node_active']
+        new_device['capabilities'] = (device['node_capabilities_json'])
         new_device['last_reading'] = reading
         devices.append(new_device)
     home_data["devices"] = devices
@@ -61,15 +62,17 @@ def getinventory():
     return resp
 
 
-@app.route('/registerNode')
+@app.route('/registerNode', methods=['POST'])
 def register_capabilities():
-    capabilities = json.loads(request.values.get('capabilities'))
-    node_location = request.values.get('location')
-    data = {"capabilities": capabilities, 'remote_address': request.remote_addr,
-            "location": node_location}
-    print(request.headers)
+    capabilities = request.get_json()
+    capabilities["remote_address"] = request.remote_addr
+    capabilities["location"] = capabilities["physicalLocation"]
     dao = HomeServerDao()
-    dao.register_node(data)
+    dao.register_node(capabilities)
+    resp = Response(response=json.dumps({"success": True}),
+                    status=200,
+                    mimetype="application/json")
+    return resp
 
 
 @app.route('/logEnv')
