@@ -3,7 +3,7 @@ from flask import Flask, render_template
 from flask import Response
 import time
 from homeServer.dao.HomeServerDao import HomeServerDao
-from commonServer.dao.ExternalContentDao import ExternalContentDao
+from homeServer.dao.ExternalContentDao import ExternalContentDao
 
 import simplejson as json
 import datetime
@@ -41,11 +41,11 @@ def home():
 
 @app.route('/wx')
 def weather():
-    weather_data = {"forecasts": [externalContent.getMarineForecast(externalContent.HOWE_SOUND),
-                                  externalContent.getMarineForecast(externalContent.GEORGIA_SOUTH)],
-                    "current_conditions": [externalContent.getMarineConditions(externalContent.PAM_ROCKS),
-                                           externalContent.getMarineConditions(externalContent.POINT_ATKINSON),
-                                           externalContent.getMarineConditions(externalContent.HALIBUT_BANK)],
+    weather_data = {"forecasts": [externalContent.get_marine_forecast(externalContent.HOWE_SOUND),
+                                  externalContent.get_marine_forecast(externalContent.GEORGIA_SOUTH)],
+                    "current_conditions": [externalContent.get_marine_conditions(externalContent.PAM_ROCKS),
+                                           externalContent.get_marine_conditions(externalContent.POINT_ATKINSON),
+                                           externalContent.get_marine_conditions(externalContent.HALIBUT_BANK)],
                     "tide_data": [externalContent.get_tides(externalContent.POINT_ATKINSON, datetime.date.today()),
                                   externalContent.get_tides(externalContent.GIBSONS, datetime.date.today())]}
     return render_template("weather.html", weather_data=weather_data)
