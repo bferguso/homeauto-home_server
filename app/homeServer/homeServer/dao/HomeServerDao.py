@@ -1,15 +1,16 @@
 import psycopg2
 import psycopg2.extras
 import simplejson as json
+import os
 
 
 class HomeServerDao:
     def __init__(self):
         pass
 
-    user = "homeauto"
-    password = "homeauto"
-    database = "homeauto"
+    user = os.getenv("DB_SCHEMA")
+    password = os.getenv("DB_PASSWORD")
+    database = os.getenv("DB_DATABASE")
 
     def get_connection(self):
         return psycopg2.connect("dbname="+self.database+" user="+self.user+" password="+self.password)
