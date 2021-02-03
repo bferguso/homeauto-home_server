@@ -3,7 +3,7 @@ from flask import Flask, render_template
 from flask import Response
 import time
 from homeServer.dao.HomeServerDao import HomeServerDao
-from homeServer.dao.ExternalContentDao import ExternalContentDao
+from commonServer.dao.ExternalContentDao import ExternalContentDao
 
 import simplejson as json
 import datetime
