@@ -191,7 +191,7 @@
             </div>
         {% endif %}
         <div class="smallDarkGray">
-            Last seen: <div class="dashboardTimestamp">{{location.last_seen_timestamp}}</div>
+            Last seen: <div class="dashboardTimestamp">{{location.last_seen_timestamp.strftime('%Y-%m-%d %H:%M:%S'}}</div>
         </div>
         {% if location.node_active %}
         <div class="sectionToggle"
