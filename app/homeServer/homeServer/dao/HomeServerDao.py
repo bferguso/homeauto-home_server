@@ -40,37 +40,31 @@ class HomeServerDao:
                         , (env_data['location'], env_data['remote_address']))
 
     def register_node(self, node_data):
-        conn = self.get_connection()
-        cur = self.get_cursor(conn)
-        print("Trying to save "+str(node_data))
-        cur.execute("select * from ha_remote_devices where node_location = %s and remote_address =  %s;"
-                    , (node_data['location'], node_data['remote_address']))
-        if cur.rowcount == 0:
-            cur.execute("insert into ha_remote_devices (node_location, remote_address, node_active, last_seen_timestamp, node_capabilities_json) values( %s, %s, %s, current_timestamp, %s);"
-                        , (node_data['location'], node_data['remote_address'], True, json.dumps(node_data['capabilities'])))
-        else:
-            cur.execute("update ha_remote_devices set last_seen_timestamp = current_timestamp, node_capabilities_json = %s, node_active=true where node_location = %s and remote_address =  %s;"
-                        , (json.dumps(node_data['capabilities']), node_data['location'], node_data['remote_address']))
-        conn.commit()
-        cur.close()
-        conn.close()
+        with self.get_connection() as conn:
+            with self.get_cursor(conn) as cur:
+                print("Trying to save "+str(node_data))
+                cur.execute("select * from ha_remote_devices where node_location = %s and remote_address =  %s;"
+                            , (node_data['location'], node_data['remote_address']))
+                if cur.rowcount == 0:
+                    cur.execute("insert into ha_remote_devices (node_location, remote_address, node_active, last_seen_timestamp, node_capabilities_json) values( %s, %s, %s, current_timestamp, %s);"
+                                , (node_data['location'], node_data['remote_address'], True, json.dumps(node_data['capabilities'])))
+                else:
+                    cur.execute("update ha_remote_devices set last_seen_timestamp = current_timestamp, node_capabilities_json = %s, node_active=true where node_location = %s and remote_address =  %s;"
+                                , (json.dumps(node_data['capabilities']), node_data['location'], node_data['remote_address']))
 
     def save_environment_log(self, env_data):
-        conn = self.get_connection()
-        cur = self.get_cursor(conn)
-        pressure = env_data['pressure'] if 'pressure' in env_data else 0.00
-        alt = env_data['alt'] if 'alt' in env_data else 0.00
-        heatIndex = env_data['heatIndex'] if 'heatIndex' in env_data else 0.00
-        if 'sample_timestamp' not in env_data or not env_data['sample_timestamp']:
-            cur.execute("insert into ha_environment_log(node_location,temperature,humidity, pressure, altitude, heat_index) values (%s, %s, %s, %s, %s, %s);"
-                    , (env_data['location'], env_data['temp'], env_data['humidity'], pressure, alt, heatIndex))
-        else:
-            cur.execute("insert into ha_environment_log(node_location,temperature,humidity, pressure, altitude, heat_index, sample_timestamp) values (%s, %s, %s, %s, %s, %s, %s);"
-                    , (env_data['location'], env_data['temp'], env_data['humidity'], pressure, alt, heatIndex, env_data['sample_timestamp']))
-        self.__log_device_seen(cur, env_data)
-        conn.commit()
-        cur.close()
-        conn.close()
+        with self.get_connection() as conn:
+            with self.get_cursor(conn) as cur:
+                pressure = env_data['pressure'] if 'pressure' in env_data else 0.00
+                alt = env_data['alt'] if 'alt' in env_data else 0.00
+                heatIndex = env_data['heatIndex'] if 'heatIndex' in env_data else 0.00
+                if 'sample_timestamp' not in env_data or not env_data['sample_timestamp']:
+                    cur.execute("insert into ha_environment_log(node_location,temperature,humidity, pressure, altitude, heat_index) values (%s, %s, %s, %s, %s, %s);"
+                            , (env_data['location'], env_data['temp'], env_data['humidity'], pressure, alt, heatIndex))
+                else:
+                    cur.execute("insert into ha_environment_log(node_location,temperature,humidity, pressure, altitude, heat_index, sample_timestamp) values (%s, %s, %s, %s, %s, %s, %s);"
+                            , (env_data['location'], env_data['temp'], env_data['humidity'], pressure, alt, heatIndex, env_data['sample_timestamp']))
+                self.__log_device_seen(cur, env_data)
 
     def get_last_seen_devices(self):
         conn = self.get_connection()

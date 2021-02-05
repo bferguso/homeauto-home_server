@@ -92,11 +92,13 @@
             });
         }
 
-        var markSensorActive = function (locationName, ipAddress, checkbox) {
+        var markSensorActive = function (locationName, ipAddress, icon) {
+            dashboardItem = $(icon).closest("div.dashboardItem");
+            isActive = dashboardItem.hasClass("active_True");
             var enable_data = {
                 "location_name": locationName,
                 "ip_address": ipAddress,
-                "active": !$(checkbox).is(":checked")
+                "active": !isActive
             };
             $.ajax({
                 method: "POST",
@@ -106,6 +108,12 @@
                     console.log(data);
                     if (data.success)
                     {
+                        dashboardItem.removeClass(isActive ? "active_True" : "active_False");
+                        dashboardItem.addClass(isActive ? "active_False" : "active_True");
+                        if (isActive)
+                        {
+                            dashboardItem.hide();
+                        }
                         showMessage("successMessage", "Successfully updated station state to "+(enable_data.active? "active" : "inactive"));
                     }
                     else
@@ -178,9 +186,7 @@
         </div>
         <div class="smallDarkGray">
             <div class="smallDarkGray">{{ location.capabilities.environment_sensor }}</div>
-            <div class="nodeControl">Disabled? <input type="checkbox" name="inactiveStation" title="Station inactive?"
-                                                onClick="markSensorActive('{{location.node_location}}', '{{location.remote_address}}', this);"
-                                                value="inactive" {%if not location.node_active %}checked{% endif %}/>
+            <div class="nodeControl"><i class="glyphicon glyphicon-eye-close clickable" title="Disable?" onclick="markSensorActive('{{location.node_location}}', '{{location.remote_address}}', this);"></i>
             </div>
         </div>
         {% if location.node_active and location.capabilities.makeup_fan_controller %}
@@ -191,11 +197,12 @@
             </div>
         {% endif %}
         <div class="smallDarkGray">
-            Last seen: <div class="dashboardTimestamp">{{location.last_seen_timestamp.strftime('%Y-%m-%d %H:%M:%S'}}</div>
+            Last seen: <div class="dashboardTimestamp">{{location.last_seen_timestamp.strftime('%Y-%m-%d %H:%M:%S')}}</div>
         </div>
         {% if location.node_active %}
         <div class="sectionToggle"
-             onclick="toggleVisibility('config_{{ ip_label }}_{{ location.node_location }}')">Update Config</div>
+             onclick="toggleVisibility('config_{{ ip_label }}_{{ location.node_location }}')">
+        <i class="glyphicon glyphicon-cog" title="Configure device"></i> </div>
     <div id="config_{{ ip_label }}_{{ location.node_location }}" class="configControls" style="display: none;">
     <hr style="border-bottom: 5px;">
     <div>
