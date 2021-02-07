@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-theme.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/ferginzey.css') }}"/>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/Chart.min.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fa-all.min.css') }}"/>
 
     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
     <!-- Latest compiled and minified JavaScript -->
@@ -159,14 +160,14 @@
 <body>
 <div class="ferginzey_title">Ferginzeys' Home Data</div>
 <div class="nav_links">
-    <div class="nav_link"><a href="/homeServer/hourlySummary">Hourly Summary</a></div>
-    <div class="nav_link"><a href="/homeServer/dailySummary">Daily Summary</a></div>
-    <div class="nav_link"><a href="/homeServer/wx">Weather Forecasts & Conditions</a></div>
+    <div class="nav_link"><a href="/homeServer/hourlySummary"><i class="fa fa-clock" title="Hourly summary"></i></a></div>
+    <div class="nav_link"><a href="/homeServer/dailySummary"><i class="fa fa-calendar-alt" title="Daily summary"></i> </a></div>
+    <div class="nav_link"><a href="/homeServer/wx"><i class="fas fa-anchor" title="Marine weather"></i></a></div>
 </div>
 <hr>
-<div>Current Interior Readings
+<div class="sectionTitle">Current Interior Readings
     <div class="sectionToggle" style="display: inline;" title="Show/Hide inactive locations"
-         onclick="toggleInactiveLocations();"><i class="glyphicon glyphicon-eye-close"></i></div>
+         onclick="toggleInactiveLocations();"><i class="fa fa-eye-slash"></i></div>
 </div>
 <div id="successMessage" class="messageSuccess" style="display: none;"></div>
 <div id="errorMessage" class="messageError" style="display: none;"></div>
@@ -188,29 +189,29 @@
         </div>
         <div class="smallDarkGray">
             <div class="smallDarkGray">{{ location.capabilities.environment_sensor }}</div>
-            <div class="nodeControl"><i class="glyphicon glyphicon-eye-close clickable" title="Disable?" onclick="markSensorActive('{{location.node_location}}', '{{location.remote_address}}', this);"></i>
-            </div>
+            {% if location.node_active and location.capabilities.makeup_fan_controller %}
+            <div class="nodeControl">Make-up Fan:
+                <input type="checkbox" name="fanController" title="Control make-up fan"
+                       data-value="{{ location.remote_address }}" onclick="activateFan(this);" disabled></div>
+            {% endif %}
         </div>
-        {% if location.node_active and location.capabilities.makeup_fan_controller %}
-            <div class="smallDarkGray">
-                <div class="nodeControl">Make-up Fan:
-                    <input type="checkbox" name="fanController" title="Control make-up fan"
-                           data-value="{{ location.remote_address }}" onclick="activateFan(this);" disabled></div>
-            </div>
-        {% endif %}
         <div class="smallDarkGray">
             Last seen: <div class="dashboardTimestamp">{{location.last_seen_timestamp.strftime('%Y-%m-%d %H:%M:%S')}}</div>
         </div>
         {% if location.node_active %}
-        <div class="sectionToggle"
-             onclick="toggleVisibility('config_{{ ip_label }}_{{ location.node_location }}')">
-        <i class="glyphicon glyphicon-cog" title="Configure device"></i> </div>
+            <div class="smallDarkGray">
+                <div class="smallDarkGray"><i class="fas fa-cog clickable" title="Configure device"
+                        onclick="toggleVisibility('config_{{ ip_label }}_{{ location.node_location }}')"></i></div>
+                <div class="nodeControl"><i class="fa fa-eye-slash clickable" title="Disable?"
+                                            onclick="markSensorActive('{{ location.node_location }}', '{{ location.remote_address }}', this);"></i>
+                </div>
+            </div>
     <div id="config_{{ ip_label }}_{{ location.node_location }}" class="configControls" style="display: none;">
     <hr style="border-bottom: 5px;">
     <div>
         <label for="sensorLocationText_{{ ip_label }}" class="configLabel">Name</label>
         <input id="sensorLocationText_{{ ip_label }}" type="text" value="{{location.node_location}}" size="18"/>
-        <span><i class="glyphicon glyphicon-refresh clickable" onclick="updateSensorLocation('{{location.remote_address}}', 'sensorLocationText_{{ ip_label }}');"></i></span>
+        <span><i class="fas fa-sync clickable" onclick="updateSensorLocation('{{location.remote_address}}', 'sensorLocationText_{{ ip_label }}');"></i></span>
     </div>
     <!--div>
         <input id="publishHost_{{location.remote_address}}" type="text" value="{{location.remote_address}}"/>
