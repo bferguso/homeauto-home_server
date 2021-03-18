@@ -129,12 +129,72 @@
             });
         }
 
-        var updateSensorLocation = function (ipAddress, textId) {
-            var newLocation = $("#" + textId).val();
-            console.log("New location for IP "+ipAddress+": "+newLocation);
+        var toggleConfigVisibility = function(configDivId) {
+            toggleVisibility(configDivId);
+            var configDiv = $("#"+configDivId);
+            configDiv.find("input[type=text]").prop("disabled", true);
+            if (configDiv.is(":visible"))
+            {
+                var ipAddress = configDiv.attr("data-sensor-ip");
+                console.log("Getting config values from "+ipAddress+"...");
+                $.ajax({
+                    method: "GET",
+                    url: "http://" + ipAddress + "/getConfig",
+                    success: function (msg) {
+                        console.log(msg);
+                        showMessage("successMessage", JSON.stringify(msg));
+                        updateConfigFields(configDiv, msg);
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        console.log("Ajax call failed: " + textStatus + ": " + errorThrown);
+                        showMessage("errorMessage", "Unable to update location: " + textStatus + ": " + errorThrown);
+                    }
+                });
+            }
+        }
+
+        var updateConfigFields = function(configDiv, nodeConfig) {
+            //var nodeConfig = JSON.parse(jsonString);
+            var inputField;
+            if (nodeConfig)
+            {
+                Object.keys(nodeConfig).forEach(function(key, index) {
+                    console.log(key+"=>"+nodeConfig[key]);
+                    inputField = null;
+                    if (key === "location")
+                    {
+                        console.log("Setting location");
+                        inputField = configDiv.find("input[type=text].sensorLocation");
+                    }
+                    else if (key === "sendInterval")
+                    {
+                        inputField = configDiv.find("input[type=text].sendInterval");
+                    }
+                    else if (key === "bufferEnabled" && !nodeConfig[key])
+                    {
+                        inputField = configDiv.find("input[type=text].bufferInterval");
+                    }
+                    else if (key === "bufferInterval")
+                    {
+                        inputField = configDiv.find("input[type=text].bufferInterval");
+                    }
+                    if (inputField)
+                    {
+                        inputField.val(nodeConfig[key]);
+                        inputField.prop("disabled", false);
+                    }
+                });
+            }
+        };
+
+        var updateConfigValue = function (ipAddress, configName, textId) {
+            var newValue = $("#" + textId).val();
+            console.log("New location for IP "+ipAddress+": "+newValue);
+            var configUrl = "http://" + ipAddress + "/updateConfig?" + configName + "=" + newValue;
+            console.log("Calling URL: "+configUrl);
             $.ajax({
                 method: "GET",
-                url: "http://" + ipAddress + "/updateConfig?physicalLocation=" + newLocation,
+                url: configUrl,
                 success: function (msg) {
                     console.log(msg);
                     showMessage("successMessage", msg);
@@ -202,19 +262,34 @@
         {% if location.node_active %}
             <div class="smallDarkGray">
                 <div class="smallDarkGray"><i class="fas fa-cog clickable" title="Configure device"
-                        onclick="toggleVisibility('config_{{ ip_label }}_{{ location.node_location }}')"></i></div>
+                        onclick="toggleConfigVisibility('config_{{ ip_label }}_{{ location.node_location }}')"></i></div>
                 <div class="nodeControl"><i class="fa fa-eye-slash clickable" title="Disable?"
                                             onclick="markSensorActive('{{ location.node_location }}', '{{ location.remote_address }}', this);"></i>
                 </div>
             </div>
-    <div id="config_{{ ip_label }}_{{ location.node_location }}" class="configControls" style="display: none;">
-    <hr style="border-bottom: 5px;">
-    <div>
-        <label for="sensorLocationText_{{ ip_label }}" class="configLabel">Name</label>
-        <input id="sensorLocationText_{{ ip_label }}" type="text" value="{{location.node_location}}" size="18"/>
-        <span><i class="fas fa-sync clickable" onclick="updateSensorLocation('{{location.remote_address}}', 'sensorLocationText_{{ ip_label }}');"></i></span>
-    </div>
-    <!--div>
+    <div id="config_{{ ip_label }}_{{ location.node_location }}" class="configControls"
+         data-sensor-ip="{{ location.remote_address }}" style="display: none;">
+        <hr style="border-bottom: 5px;">
+        <div>
+            <label for="sensorLocationText_{{ ip_label }}" class="configLabel">Name</label>
+            <input id="sensorLocationText_{{ ip_label }}" class="sensorLocation" type="text"
+                   value="{{ location.node_location }}" size="18"/>
+            <span><i class="fas fa-sync clickable"
+                     onclick="updateConfigValue('{{ location.remote_address }}', 'physicalLocation', 'sensorLocationText_{{ ip_label }}');"></i></span>
+        </div>
+        <div>
+            <label for="sensorSendInterval_{{ ip_label }}" class="configLabel">Send</label>
+            <input id="sensorSendInterval_{{ ip_label }}" class="sendInterval" type="text" value="0" size="10"/>
+            <span>(s) <i class="fas fa-sync clickable"
+                         onclick="updateConfigValue('{{ location.remote_address }}', 'sendInterval', 'sensorSendInterval_{{ ip_label }}');"></i></span>
+        </div>
+        <div>
+            <label for="sensorBufferInterval_{{ ip_label }}" class="configLabel">Buffer</label>
+            <input id="sensorBufferInterval_{{ ip_label }}" class="bufferInterval" type="text" value="0" size="10"/>
+            <span>(s) <i class="fas fa-sync clickable"
+                         onclick="updateConfigValue('{{ location.remote_address }}', 'bufferInterval', 'sensorBufferInterval_{{ ip_label }}');"></i></span>
+        </div>
+        <!--div>
         <input id="publishHost_{{location.remote_address}}" type="text" value="{{location.remote_address}}"/>
     </div>
     <div>
