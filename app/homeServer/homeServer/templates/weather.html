@@ -16,82 +16,45 @@
     <!-- Latest compiled and minified JavaScript -->
     <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/ferginzey.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tide_graph.js') }}"></script>
 
     <!-- ChartJS -->
     <script src="{{ url_for('static', filename='js/Chart.bundle.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/chartjs-plugin-annotation.min.js') }}"></script>
 
     <script>
+        var tideChartsDiv;
         $().ready(function () {
             $("div.forecastTitle:contains('WARNING')").addClass("readingWarning");
             var value;
 
             tideChartsDiv = $("#tideChartsDiv");
             // Repeat
-            {% for tide_data in weather_data.tide_data %}
-            stationId = "{{tide_data.station_id}}";
-            tideDiv = $("<div style='display: block'></div>")
-            tideDiv.append('<div>{{tide_data.location}}</div>');
-            tideDiv.append("<div style='max-width: 600px'><canvas id='tides"+stationId+"' ></canvas></div>");
-            tideChartsDiv.append(tideDiv);
-            ctx = $("#tides"+stationId);
-            var tideChart = new Chart(ctx, {
-                type: "line",
-                data: {
-                    datasets: [{
-                            label: "height (ft)",
-                            data: [{% for tide_entry in tide_data.tide_entries %}{% if (loop.index0 != 0) %}, {% endif %}{'x': new Date('{{ tide_entry.time }}'), 'y': {{ tide_entry.height_ft }} }{% endfor %}],
-                            borderWidth: 1,
-                            borderColor: 'rgba(10,90,255,.5)',
-                            backgroundColor: 'rgba(10,90,255,.1)'
-        }],
-                },
-                options: {
-                    legend: {
-                        show: false
-                    },
-                    scales: {
-                        xAxes: [{
-                            type: 'time',
-                            time: {
-                                displayFormats: {
-                                    'hour': 'D MMM HH:00'
-                                }
-                            }
-                        }]
-                    },
-                        annotation: {
-                            drawTime: 'afterDatasetsDraw',
-                            annotations: [{
-                                id: "nowLine",
-                                type: "line",
-                                mode: "vertical",
-                                scaleID: "x-axis-0",
-                                position: "top",
-                                borderWidth: 1,
-                                borderColor: "rgba(6,51,143,0.5)",
-                                value: moment().toDate(),
-                                label: {
-                                    content: "now",
-                                    enabled: "True",
-                                    position: "top",
-                                    backgroundColor: "rgba(0,0,0,0)",
-                                    fontColor: 'black',
-                                    fontStyle: "oblique"
-                                }
-                            }]
-                        }
-                }
-            });
-            {% endfor %}
+            {% for station_location in weather_data.tide_locations %}
+                loadTide('{{ station_location }}', tideChartsDiv, "{{ url_for('static', filename='images/ajax-wait.gif') }}");
+            {%  endfor %}
+
             // End Repeat
         });
+
+        var showMessage = function (div, message) {
+            var msgDiv = $("#" + div);
+            msgDiv.hide();
+            msgDiv.text(message);
+            msgDiv.fadeIn(500, function () {
+                msgDiv.fadeOut(2000)
+            });
+        }
     </script>
+
 </head>
 <body>
+<div class="errorMessage"></div>
+<div class="successMessage"></div>
 <div class="ferginzey_title">Ferginzeys' Home Data</div>
 <div class="nav_links">
     <div class="nav_link"><a href="/homeServer/"><i class="fas fa-home" title="Home Page"></i></a></div>
+    <div class="nav_link"><a href="/homeServer/buildWxUrl"><i class="fas fa-cog clickable" title="Customize Weather"></i></a></div>
 </div>
 <hr>
 <div>Marine Weather</div>

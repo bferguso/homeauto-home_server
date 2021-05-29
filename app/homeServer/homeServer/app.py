@@ -46,9 +46,53 @@ def weather():
                     "current_conditions": [externalContent.get_marine_conditions(externalContent.PAM_ROCKS),
                                            externalContent.get_marine_conditions(externalContent.POINT_ATKINSON),
                                            externalContent.get_marine_conditions(externalContent.HALIBUT_BANK)],
-                    "tide_data": [externalContent.get_tides(externalContent.POINT_ATKINSON, datetime.date.today()),
-                                  externalContent.get_tides(externalContent.GIBSONS, datetime.date.today())]}
+                    "tide_locations": [externalContent.POINT_ATKINSON, externalContent.GIBSONS]}
     return render_template("weather.html", weather_data=weather_data)
+
+@app.route('/customWx')
+def custom_weather():
+    forecast_areas = json.loads(request.values.get("forecasts"))
+    forecasts = []
+    for forecast_area in forecast_areas:
+        forecasts.append(externalContent.get_marine_forecast(forecast_area))
+
+    condition_stations = json.loads(request.values.get("conditions"))
+    conditions = []
+    for condition_station in condition_stations:
+        conditions.append(externalContent.get_marine_conditions(condition_station))
+
+    tide_stations = json.loads(request.values.get("tides"))
+    # marine_tides = []
+    # for tide_station in tide_stations:
+    #     marine_tides.append(externalContent.get_tides(tide_station, datetime.date.today()))
+    weather_data = {"forecasts": forecasts,
+                    "current_conditions": conditions,
+                    "tide_locations": tide_stations}
+    return render_template("weather.html", weather_data=weather_data)
+
+
+@app.route('/buildWxUrl')
+def build_url():
+    stations = {"forecast_areas": externalContent.get_forecast_areas(),
+                "tide_stations": externalContent.get_tide_stations(),
+                "condition_stations": {
+                    "land": externalContent.get_condition_stations("land"),
+                    "buoy": externalContent.get_condition_stations("buoy")
+                    }
+                }
+    build_base_url = request.base_url.replace("buildWxUrl", "customWx")
+    return render_template("marineWxBuilder.html", station_data=stations, base_url=build_base_url)
+
+
+@app.route('/getTides')
+def get_tides():
+    location_name = request.args.get("location_name")
+    tide_data = externalContent.get_tides(location_name, datetime.date.today())
+    data = {"success": True, "tide_data": tide_data}
+    return Response(response=json.dumps(data),
+                    status=200,
+                    mimetype="application/json")
+
 
 @app.route('/inventory')
 def getinventory():

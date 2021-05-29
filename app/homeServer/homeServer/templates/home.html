@@ -174,6 +174,10 @@
                     {
                         inputField = configDiv.find("input[type=text].bufferInterval");
                     }
+                    else if (key === "bufferedReadings")
+                    {
+                        configDiv.find("div.bufferedReadings").text(nodeConfig[key]);
+                    }
                     else if (key === "bufferInterval")
                     {
                         inputField = configDiv.find("input[type=text].bufferInterval");
@@ -188,16 +192,25 @@
         };
 
         var updateConfigValue = function (ipAddress, configName, textId) {
-            var newValue = $("#" + textId).val();
-            console.log("New location for IP "+ipAddress+": "+newValue);
-            var configUrl = "http://" + ipAddress + "/updateConfig?" + configName + "=" + newValue;
+            var configUrl = "http://" + ipAddress;
+            if (configName === "flushBuffer")
+            {
+                configUrl = configUrl + "/flushBuffer";
+            }
+            else
+            {
+                var newValue = $("#" + textId).val();
+                console.log("New location for IP "+ipAddress+": "+newValue);
+                configUrl = configUrl + "/updateConfig?" + configName + "=" + newValue;
+            }
+
             console.log("Calling URL: "+configUrl);
             $.ajax({
                 method: "GET",
                 url: configUrl,
                 success: function (msg) {
                     console.log(msg);
-                    showMessage("successMessage", msg);
+                    showMessage("successMessage", JSON.stringify(msg));
                 },
                 error: function (jqXHR, textStatus, errorThrown) {
                     console.log("Ajax call failed: " + textStatus + ": " + errorThrown);
@@ -273,20 +286,27 @@
         <div>
             <label for="sensorLocationText_{{ ip_label }}" class="configLabel">Name</label>
             <input id="sensorLocationText_{{ ip_label }}" class="sensorLocation" type="text"
-                   value="{{ location.node_location }}" size="18"/>
+                   value="{{ location.node_location }}" size="15"/>
             <span><i class="fas fa-sync clickable"
                      onclick="updateConfigValue('{{ location.remote_address }}', 'physicalLocation', 'sensorLocationText_{{ ip_label }}');"></i></span>
         </div>
         <div>
+            <label for="sensorBufferedReadings_{{ ip_label }}" class="configLabel">Buffered</label>
+            <div class="bufferedReadings" style="display: inline-block"></div>
+            <span> <i class="fas fa-sync clickable"
+                      onclick="updateConfigValue('{{ location.remote_address }}', 'flushBuffer', '');"
+                      title="Flush buffer"></i></span>
+        </div>
+        <div>
             <label for="sensorSendInterval_{{ ip_label }}" class="configLabel">Send</label>
             <input id="sensorSendInterval_{{ ip_label }}" class="sendInterval" type="text" value="0" size="10"/>
-            <span>(s) <i class="fas fa-sync clickable"
+            <span>(ms) <i class="fas fa-sync clickable"
                          onclick="updateConfigValue('{{ location.remote_address }}', 'sendInterval', 'sensorSendInterval_{{ ip_label }}');"></i></span>
         </div>
         <div>
             <label for="sensorBufferInterval_{{ ip_label }}" class="configLabel">Buffer</label>
             <input id="sensorBufferInterval_{{ ip_label }}" class="bufferInterval" type="text" value="0" size="10"/>
-            <span>(s) <i class="fas fa-sync clickable"
+            <span>(ms) <i class="fas fa-sync clickable"
                          onclick="updateConfigValue('{{ location.remote_address }}', 'bufferInterval', 'sensorBufferInterval_{{ ip_label }}');"></i></span>
         </div>
         <!--div>
