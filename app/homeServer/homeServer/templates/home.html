@@ -103,7 +103,7 @@
             };
             $.ajax({
                 method: "POST",
-                url: "http://cabin.local/homeServer/markSensorActive",
+                url: "{{ url_for('mark_sensor_active') }}",
                 data: enable_data,
                 success: function (data) {
                     console.log(data);
@@ -257,7 +257,7 @@
         <div class="dashboardTemp">{{location.last_reading.temperature}}&deg;C</div>
         <div style="margin-top: 8px; margin-bottom: 5px;">
             <div class="dashboardHumidity">{{location.last_reading.humidity}}%</div>
-            {% if location.last_reading.pressure != 0.00 %}
+            {% if location.last_reading.pressure and location.last_reading.pressure != 0.00 %}
             <div class="dashboardPressure">{{location.last_reading.pressure/10}} kPa</div>
             {% endif %}
         </div>

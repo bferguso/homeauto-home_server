@@ -26,12 +26,11 @@
         var tideChartsDiv;
         $().ready(function () {
             $("div.forecastTitle:contains('WARNING')").addClass("readingWarning");
-            var value;
 
             tideChartsDiv = $("#tideChartsDiv");
             // Repeat
             {% for station_location in weather_data.tide_locations %}
-                loadTide('{{ station_location }}', tideChartsDiv, "{{ url_for('static', filename='images/ajax-wait.gif') }}");
+                loadTide('{{ station_location }}', tideChartsDiv, "{{ url_for('static', filename='images/ajax-wait.gif') }}", "{{ url_for('get_tides')}}");
             {%  endfor %}
 
             // End Repeat
