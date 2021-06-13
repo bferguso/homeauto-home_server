@@ -52,8 +52,8 @@
 <div class="successMessage"></div>
 <div class="ferginzey_title">Ferginzeys' Home Data</div>
 <div class="nav_links">
-    <div class="nav_link"><a href="/homeServer/"><i class="fas fa-home" title="Home Page"></i></a></div>
-    <div class="nav_link"><a href="/homeServer/buildWxUrl"><i class="fas fa-cog clickable" title="Customize Weather"></i></a></div>
+    <div class="nav_link"><a href="{{ url_for("home")  }}"><i class="fas fa-home" title="Home Page"></i></a></div>
+    <div class="nav_link"><a href="{{ url_for("build_url") }}"><i class="fas fa-cog clickable" title="Customize Weather"></i></a></div>
 </div>
 <hr>
 <div>Marine Weather</div>

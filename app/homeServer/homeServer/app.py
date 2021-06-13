@@ -62,9 +62,6 @@ def custom_weather():
         conditions.append(externalContent.get_marine_conditions(condition_station))
 
     tide_stations = json.loads(request.values.get("tides"))
-    # marine_tides = []
-    # for tide_station in tide_stations:
-    #     marine_tides.append(externalContent.get_tides(tide_station, datetime.date.today()))
     weather_data = {"forecasts": forecasts,
                     "current_conditions": conditions,
                     "tide_locations": tide_stations}
