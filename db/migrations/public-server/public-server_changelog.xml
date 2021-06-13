@@ -12,4 +12,11 @@
             <column name="access_timestamp"/>
         </createIndex>
     </changeSet>
+    <changeSet author="qed" id="v2021.06.13.092300__alter_url_column_length">
+        <modifyDataType
+                tableName="ps_access_log"
+                columnName="access_url"
+                newDataType="VARCHAR(1024)"
+        />
+    </changeSet>
 </databaseChangeLog>
