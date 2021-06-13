@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-    <title>Ferginzeys' Home - Local Weather</title>
+    <title>Ferginzeys' Home -  - {{ weather_data.config_title }}</title>
     <!-- Latest compiled and minified CSS -->
     <!-- Latest compiled and minified CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
@@ -50,13 +50,12 @@
 <body>
 <div class="errorMessage"></div>
 <div class="successMessage"></div>
-<div class="ferginzey_title">Ferginzeys' Home Data</div>
+<div class="ferginzey_title">Ferginzeys' Home Data - {{ weather_data.config_title }}</div>
 <div class="nav_links">
     <div class="nav_link"><a href="{{ url_for("home")  }}"><i class="fas fa-home" title="Home Page"></i></a></div>
     <div class="nav_link"><a href="{{ url_for("build_url") }}"><i class="fas fa-cog clickable" title="Customize Weather"></i></a></div>
 </div>
 <hr>
-<div>Marine Weather</div>
 <div class="dashboardContainer">
     {% for condition in weather_data.current_conditions %}
         <div class="dashboardItem marineConditions">
@@ -89,7 +88,7 @@
 <hr>
 
 <div id="tideChartsDiv" class="marineConditions">
-    <div style="font-size: medium">Tide information (ft)</div>
+    <div style="font-size: medium">Tide information</div>
 </div>
 </body>
 </html>
