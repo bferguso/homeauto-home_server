@@ -12,10 +12,11 @@
 # two instances of an app on one server and a single component name would
 # cause directory name conflicts.
 cd_component_name:  "{{ cd_component }}"
-cd_app_root:        "/var/www/html"
-cd_app_install:        "{{ cd_app_root }}/{{ cd_component_name }}"
-cd_app_home:        "{{ cd_app_root }}/{{ cd_component_name }}"
+cd_app_root:        "/var/www/python"
+cd_app_install:        "{{ cd_app_root }}/{{ cd_component_name }}2"
+cd_app_home:        "{{ cd_app_root }}/{{ cd_component_name }}2"
 
 # Generic properties
 cdprep_become:            "{{ install_user }}"
 cdprep_mode:              '0775'
+cdprep_skip_cleanup:      "{{ skip_cleanup | default(False) }}"

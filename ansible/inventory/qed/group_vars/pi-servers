@@ -1,5 +1,4 @@
-artifactory_username: bferguso
-artifactory_password:
+remote_user: pi
 
 s6_enabled:                       no
 s6_home:                          '/sw_ux/s6'

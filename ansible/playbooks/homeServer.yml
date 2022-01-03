@@ -5,9 +5,14 @@
     data_sources: []
     config_in_source_repo: True
     cd_component: 'homeServer'
-    cd_git_url: "{{ local_repo | default('https://bitbucket.org/bferguso/arduino.git')}}"
+    cd_git_url: "{{ local_repo | default('https://bitbucket.org/bferguso/')}}"
     cd_git_username: "bferguso"
-    cd_git_password: ""
+    #cd_git_password: "{{ git_password }}"
+    cd_git_password: "f0rD3vT3am!"
+    cd_common_repo: "common-server"
+    cd_common_version: "main"
+    cd_repo: "common-server"
+    cd_version: "main"
 
   roles:
     # prepare the installation environment by creating the necessary folders
@@ -17,13 +22,13 @@
 #    - name: self-signed-cert
 #      when: skip_container_deploy is not defined
 
-    # deploy the CFSWeb webapp
+    # deploy the homeServer webapp
     - name: webapp
       vars:
         psql_config:
            database: "homeauto"
            user:     "homeauto"
-           password: "homeauto"
+           password: "{{ postgres_password }}"
 
 #  tasks:
 #    - name: "Debug directory structure"
