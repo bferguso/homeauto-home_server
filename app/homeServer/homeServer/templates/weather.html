@@ -62,7 +62,7 @@
         <div class="dashboardItem marineConditions">
             <div class="marineLocation">
                 <div class="dashboardLocation">{{condition.station}}</div>
-                <div class="marineArea">{{condition.location}}</div>
+                <div class="marineArea" style="white-space: break-spaces;">{{condition.location}}</div>
             </div>
             {% for conditionEntry in condition.conditionEntries %}
                 <div class="marineConditionsEntry {%if (loop.index0 % 2 == 0) %}rowEven {% else %} rowOdd {% endif %}">
