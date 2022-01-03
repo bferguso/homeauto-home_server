@@ -55,6 +55,7 @@
     <div class="nav_link"><a href="{{ url_for("home")  }}"><i class="fas fa-home" title="Home Page"></i></a></div>
     <div class="nav_link"><a href="{{ url_for("build_url") }}"><i class="fas fa-cog clickable" title="Customize Weather"></i></a></div>
 </div>
+<div style="font-style: italic;">This data is taken from the official <a href="https://weather.gc.ca/marine/region_e.html?mapID=02">Government of Canada Marine weather site</a></div>
 <hr>
 <div class="dashboardContainer">
     {% for condition in weather_data.current_conditions %}
@@ -88,7 +89,7 @@
 <hr>
 
 <div id="tideChartsDiv" class="marineConditions">
-    <div style="font-size: medium">Tide information</div>
+    <div style="font-size: medium">Tide information (ft)</div>
 </div>
 </body>
 </html>

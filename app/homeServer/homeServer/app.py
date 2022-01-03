@@ -11,6 +11,7 @@ import decimal
 app = Flask(__name__)
 app.debug = True
 externalContent = ExternalContentDao()
+default_refresh = 30
 
 def verify_token(password):
     passw = 'thisisourtoken'
@@ -19,11 +20,23 @@ def verify_token(password):
 
     return False
 
+
+def get_refresh_time():
+    refresh = request.values.get('refresh')
+    if refresh is None:
+        return 0
+    try:
+        return int(refresh)
+    except (TypeError, ValueError):
+        return default_refresh if refresh.lower() == 'true' else 0
+
+
 @app.route('/')
 def home():
     dao = HomeServerDao()
     last_devices = dao.get_last_seen_devices()
     home_data = {}
+    home_data["refresh_time"] = get_refresh_time()
     devices = []
 
     for device in last_devices:
@@ -38,6 +51,7 @@ def home():
         devices.append(new_device)
     home_data["devices"] = devices
     return render_template("home.html", home_data=home_data)
+
 
 @app.route('/wx')
 def weather():
@@ -99,7 +113,7 @@ def get_tides():
 @app.route('/inventory')
 def getinventory():
     if not verify_token(request.args.get('token')):
-        return ('token did not matched')
+        return ('token did not match')
     data = {"message":"Have a great day"}
     data = json.dumps(data)
     resp = Response(response=data,
