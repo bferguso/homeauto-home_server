@@ -4,6 +4,7 @@ from flask import Response
 import time
 from homeServer.dao.HomeServerDao import HomeServerDao
 from homeServer.dao.ExternalContentDao import ExternalContentDao
+from homeServer.dao.TempestDao import TempestDao
 
 import simplejson as json
 import datetime
@@ -11,6 +12,7 @@ import decimal
 app = Flask(__name__)
 app.debug = True
 externalContent = ExternalContentDao()
+tempestDao = TempestDao()
 default_refresh = 30
 
 def verify_token(password):
@@ -38,6 +40,7 @@ def home():
     home_data = {}
     home_data["refresh_time"] = get_refresh_time()
     devices = []
+    home_data["tempest"] = tempestDao.get_observations()
 
     for device in last_devices:
         new_device = {}
@@ -50,6 +53,7 @@ def home():
         new_device['last_reading'] = reading
         devices.append(new_device)
     home_data["devices"] = devices
+    # print(str(home_data))
     return render_template("home.html", home_data=home_data)
 
 

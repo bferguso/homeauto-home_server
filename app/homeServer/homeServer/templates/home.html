@@ -63,9 +63,14 @@
         });
 
         var flagReading = function (field, warningClass) {
-            field.addClass(warningClass);
-            field.closest("div.dashboardItem").addClass(warningClass);
+            var closestContainer = field.closest("div.dashboardItem");
+            if (!closestContainer.hasClass("outdoorReading"))
+            {
+                field.addClass(warningClass);
+                closestContainer.addClass(warningClass);
+            }
         }
+
         var showMessage = function(div, message) {
             var msgDiv = $("#"+div);
             msgDiv.hide();
@@ -330,5 +335,22 @@
 </div>
 {% endfor %}
 </div>
+<hr>
+    <div class="dashboardItem active_True outdoorReading">
+        <div style="margin-top: -5px">
+            <div class="dashboardLocation">Outdoor</div>
+        </div>
+        <div class="dashboardTemp">{{home_data.tempest.obs[0].air_temperature}}&deg;C</div>
+        <div style="margin-top: 8px; margin-bottom: 5px;">
+            <div class="dashboardHumidity">{{home_data.tempest.obs[0].relative_humidity}}%</div>
+            <div class="dashboardPressure">{{home_data.tempest.obs[0].sea_level_pressure}} hPa</div>
+        </div>
+        <div class="smallDarkGray">
+            <div class="smallDarkGray">Precip (now/1h/day): {{ home_data.tempest.obs[0].precip | round(4) }} / {{ home_data.tempest.obs[0].precip_accum_last_1hr | round(2) }} / {{ home_data.tempest.obs[0].precip_accum_local_day | round(2) }}</div>
+        </div>
+        <div class="smallDarkGray">
+            <div class="smallDarkGray">Wind (avg/gust): {{ home_data.tempest.obs[0].wind_avg }} / {{ home_data.tempest.obs[0].wind_gust }} @ {{ home_data.tempest.obs[0].wind_direction }}&deg;</div>
+        </div>
+    </div>
 </body>
 </html>
