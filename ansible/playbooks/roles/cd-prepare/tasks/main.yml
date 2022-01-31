@@ -1,0 +1,26 @@
+---
+# tasks file for cd-prepare 
+
+- name: show install dir path
+  debug:
+    msg: "cd_app_install: {{ cd_app_install }}"
+
+- name: directories are clean
+  file:
+    path: "{{ cd_app_install }}"
+    state: absent
+  become: yes
+  become_user: "{{ cdprep_become }}"
+  when: not cdprep_skip_cleanup
+
+- name: application directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    mode: "{{ cdprep_mode }}"
+  become: yes
+  become_user: "{{ cdprep_become }}"
+  with_items:
+    - "{{ cd_app_install }}"
+  tags:
+    - 'always'

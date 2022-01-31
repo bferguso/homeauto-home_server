@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Ferginzeys' Home -  - {{ weather_data.config_title }}</title>
+    <!-- Latest compiled and minified CSS -->
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-theme.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ferginzey.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/Chart.min.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fa-all.min.css') }}"/>
+
+    <script src="{{ url_for('static', filename='js/moment.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ferginzey.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/tide_graph.js') }}"></script>
+
+    <!-- ChartJS -->
+    <script src="{{ url_for('static', filename='js/Chart.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/chartjs-plugin-annotation.min.js') }}"></script>
+
+    <script>
+        var tideChartsDiv;
+        $().ready(function () {
+            $("div.forecastTitle:contains('WARNING')").addClass("readingWarning");
+
+            tideChartsDiv = $("#tideChartsDiv");
+            // Repeat
+            {% for station_location in weather_data.tide_locations %}
+                loadTide('{{ station_location }}', tideChartsDiv, "{{ url_for('static', filename='images/ajax-wait.gif') }}", "{{ url_for('get_tides')}}");
+            {%  endfor %}
+
+            // End Repeat
+        });
+
+        var showMessage = function (div, message) {
+            var msgDiv = $("#" + div);
+            msgDiv.hide();
+            msgDiv.text(message);
+            msgDiv.fadeIn(500, function () {
+                msgDiv.fadeOut(2000)
+            });
+        }
+    </script>
+
+</head>
+<body>
+<div class="errorMessage"></div>
+<div class="successMessage"></div>
+<div class="ferginzey_title">Ferginzeys' Home Data - {{ weather_data.config_title }}</div>
+<div class="nav_links">
+    <div class="nav_link"><a href="{{ url_for("home")  }}"><i class="fas fa-home" title="Home Page"></i></a></div>
+    <div class="nav_link"><a href="{{ url_for("build_url") }}"><i class="fas fa-cog clickable" title="Customize Weather"></i></a></div>
+</div>
+<div style="font-style: italic;">This data is taken from the official <a href="https://weather.gc.ca/marine/region_e.html?mapID=02">Government of Canada Marine weather site</a></div>
+<hr>
+<div class="dashboardContainer">
+    {% for condition in weather_data.current_conditions %}
+        <div class="dashboardItem marineConditions">
+            <div class="marineLocation">
+                <div class="dashboardLocation">{{condition.station}}</div>
+                <div class="marineArea" style="white-space: break-spaces;">{{condition.location}}</div>
+            </div>
+            {% for conditionEntry in condition.conditionEntries %}
+                <div class="marineConditionsEntry {%if (loop.index0 % 2 == 0) %}rowEven {% else %} rowOdd {% endif %}">
+                    <div class="dashboardHumidity">{{conditionEntry.title | safe}}</div>
+                    <div class="dashboardPressure">{{conditionEntry.value | safe}}</div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endfor %}
+</div>
+<div class="dashboardContainer">
+    {% for forecast in weather_data.forecasts %}
+    <div class="dashboardItem marineForecast" style="flex-grow: 1;">
+        <div class="dashboardLocation marineLocation">{{forecast.location}}</div>
+        {% for forecastEntry in forecast.forecastEntries %}
+        <div class="marineForecastEntry">
+            <div class="forecastTitle">{{forecastEntry.title}}</div>
+            <div class="forecastText">{{forecastEntry.summary | safe}}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endfor %}
+</div>
+<hr>
+
+<div id="tideChartsDiv" class="marineConditions">
+    <div style="font-size: medium">Tide information (ft)</div>
+</div>
+</body>
+</html>

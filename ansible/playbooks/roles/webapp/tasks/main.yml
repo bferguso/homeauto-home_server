@@ -1,0 +1,64 @@
+---
+- name: "Get common artifacts from Git"
+  git:
+    repo: "{{ cd_git_url }}/{{cd_common_repo}}.git"
+    version: "{{ cd_common_version }}"
+    bare: True
+    username: "{{ cd_git_username }}"
+    password: "{{ cd_git_password }}"
+    dest: "{{ webapp_staging_dir }}"
+    timeout: 100
+  #    mode: 0755
+  become: yes
+  become_user: "{{ webapp_user }}"
+
+#- name: "create staging directory"
+#  file:
+#    path: "{{ webapp_staging_dir }}/.{{ webapp_war.context }}"
+#    state: directory
+#  become: yes
+#  become_user: "{{ webapp_user }}"
+#
+#- name: "extract {{ webapp_artifact.name }}"
+#  unarchive:
+#    src: "{{ webapp_staging_dir }}/{{ webapp_artifact.name }}"
+#    dest: "{{ webapp_staging_dir }}/.{{ webapp_war.context }}"
+#    remote_src: yes
+#  become: yes
+#  become_user: "{{ webapp_user }}"
+#
+## Library jars added through this mechanism are a bit of a hack; they should be included in the build process
+#- name: custom lib jars
+#  get_url:
+#    url: "{{ item.url }}"
+#    url_username: "{{ item.username | default() }}"
+#    url_password: "{{ item.password | default() }}"
+#    dest: "{{ webapp_staging_dir }}/.{{ webapp_war.context }}/WEB-INF/lib/{{ item.url | basename }}"
+#  become: yes
+#  become_user: "{{ webapp_user }}"
+#  with_items: "{{ webapp_library_jars }}"
+#
+#- name: "directory {{ webapp_tomcat_webapps_dir }}/{{ webapp_app_dir_name }}"
+#  file:
+#    path: "{{ webapp_tomcat_webapps_dir }}/{{ webapp_app_dir_name }}"
+#    state: 'directory'
+#    mode: 0755
+#  become: yes
+#  become_user: "{{ webapp_user }}"
+#
+#- name: "deploy {{ webapp_app_dir_name }}"
+#  command: "cp -a {{ webapp_staging_dir }}/.{{ webapp_war.context }}/. {{ webapp_tomcat_webapps_dir }}/{{ webapp_app_dir_name }}"
+#  become: yes
+#  become_user: "{{ webapp_user }}"
+#
+#- name: 'clean up staging assets'
+#  file:
+#    path: "{{ item }}"
+#    state: 'absent'
+#  become: yes
+#  become_user: "{{ webapp_user }}"
+#  with_items:
+#    - "{{ webapp_staging_dir }}/.{{ webapp_war.context }}"
+#    - "{{ webapp_staging_dir }}/{{ webapp_artifact.name }}"
+#
+#
