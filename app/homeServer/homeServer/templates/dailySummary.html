@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Ferginzeys' Home - Daily Environment Data</title>
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-theme.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ferginzey.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/Chart.min.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fa-all.min.css') }}"/>
+
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+
+    <script src="{{ url_for('static', filename='js/ferginzey.js') }}"></script>
+
+    <!-- ChartJS -->
+    <script src="{{ url_for('static', filename='js/Chart.bundle.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/Chart.ErrorBars.min.js') }}"></script>
+    <script>
+
+        $().ready(function (){
+            var ctx = $('#myChart');
+            var myChart = new Chart(ctx, {
+                type: 'lineWithErrorBars',
+                data: {
+                    labels: [ {% for time in times%}{%if (loop.index0 != 0)%},{% endif %} "{{time['sample_timestamp'].strftime('%Y-%m-%d')}}"{% endfor %} ],
+            datasets: [
+                {% for location in env_summary %}
+                {
+                    label: '{{location}} Temp',
+                    data: [ {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %}  {%if envrow.avg_temperature is not none %} { "y": {{ envrow.avg_temperature}} , "yMin": {{envrow.min_temperature}} , "yMax": {{envrow.max_temperature}} } {% endif %} {% endfor %} ],
+                    borderWidth: 1,
+                    errorBarLineWidth: getLineWidth('{{location}}'),
+                    errorBarWhiskerLineWidth: getLineWidth('{{location}}'),
+                    fill: false,
+                    pointStyle: getPointStyle('temperature'),
+                    borderColor: getLocationColour('{{location}}'),
+                    errorBarColor: getLocationColour('{{location}}'),
+                    errorBarWhiskerColor: getLocationColour('{{location}}'),
+                    yAxisID: 'temperature-y-axis'
+                },
+            {
+                label: '{{location}} Humid',
+                    data: [ {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %}  {%if envrow.avg_humidity is not none %} { "y": {{ envrow.avg_humidity}} , "yMin": {{envrow.min_humidity}} , "yMax": {{envrow.max_humidity}} } {% endif %} {% endfor %} ],
+                borderWidth: 1,
+                errorBarLineWidth: getLineWidth('{{location}}'),
+                errorBarWhiskerLineWidth: getLineWidth('{{location}}'),
+                fill: false,
+                pointStyle: getPointStyle('humidity'),
+                borderColor: getLocationColour('{{location}}'),
+                errorBarColor: getLocationColour('{{location}}'),
+                errorBarWhiskerColor: getLocationColour('{{location}}'),
+                yAxisID: 'humidity-y-axis'
+            },
+            {% if (env_summary[location]| map(attribute='min_pressure') | unique | list ) != [0.0] %}
+            {
+                label: '{{location}} Pressure',
+                    data: [ {% for envrow in env_summary[location] %}{%if (loop.index0 != 0)%},{% endif %}  {%if envrow.avg_pressure is not none %} { "y": {{ envrow.avg_pressure}} } {% endif %} {% endfor %} ],
+                borderWidth: 1,
+                fill: false,
+                pointStyle: getPointStyle('pressure'),
+                borderColor: getLocationColour('{{location}}'),
+                yAxisID: 'pressure-y-axis'
+            },
+            {%endif%}
+            {%endfor%}
+        ]
+        },
+            options: {
+                scales: {
+                    yAxes: [
+                        {
+                            id: 'temperature-y-axis',
+                            ticks: {
+                                suggestedMin: 10,
+                                suggestedMax: 50,
+                                // beginAtZero: true
+                            }
+                        },
+                        {
+                            id: 'humidity-y-axis',
+                            ticks: {
+                                suggestedMin: 40,
+                                suggestedMax: 70,
+                                // beginAtZero: true
+                            }
+                        },
+                        {
+                            id: 'pressure-y-axis',
+                            position: 'right',
+                            ticks: {
+                                suggestedMin: 900,
+                                suggestedMax: 1030,
+                                // beginAtZero: true
+                            }
+                        }
+                    ]
+                }
+            }
+        });
+        });
+    </script>
+
+<div class="ferginzey_title">Ferginzeys' Daily Summary</div>
+<div class="nav_links">
+    <div class="nav_link"><a href="/homeServer/"><i class="fas fa-home" title="Home Page"></i></a></div>
+    <div class="nav_link"><a href="/homeServer/hourlySummary"><i class="fa fa-clock" title="Hourly summary"></i></a></div>
+</div>
+<hr>
+<div>
+    <h3>Daily Temperature Summary</h3>
+    <canvas id="myChart" width="400" height="250"></canvas>
+</div>
+<hr>
+<a href="#" onclick="toggleVisibility('rawDataTable');">Show Data</a>
+<div id="rawDataTable" class="table active" style="padding-left: 100px; display: none;">
+    <div class="row">
+        <div class="col-sm-1 number">Location</div>
+        <div class="col-sm-2 number">Date</div>
+        <div class="col-sm-1 number">Min Temp</div>
+        <div class="col-sm-1 number">Max Temp</div>
+        <div class="col-sm-1 number">Min Hum</div>
+        <div class="col-sm-1 number">Max Hum</div>
+        <div class="col-sm-1 number">Min Press</div>
+        <div class="col-sm-1 number">Max Press</div>
+    </div>
+    {% for location in env_summary %}
+    {% for envrow in env_summary[location] %}
+    <div class="row">
+        <div class="col-sm-1 number">{{envrow.node_location}}</div>
+        <div class="col-sm-2 number">{{envrow.sample_timestamp.strftime('%Y-%m-%d')}}</div>
+        <div class="col-sm-1 number">{{envrow.min_temperature}}</div>
+        <div class="col-sm-1 number">{{envrow.max_temperature}}</div>
+        <div class="col-sm-1 number">{{envrow.min_humidity}}%</div>
+        <div class="col-sm-1 number">{{envrow.max_humidity}}%</div>
+        <div class="col-sm-1 number">{{envrow.min_pressure}}</div>
+        <div class="col-sm-1 number">{{envrow.max_pressure}}</div>
+    </div>
+    {% endfor %}
+    {% endfor %}
+</div>
+</body>
+</html>

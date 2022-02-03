@@ -1,0 +1,41 @@
+---
+- name: Deploy Ferginzey Home Automation Server
+  hosts: pi-servers
+  vars:
+    data_sources: []
+    config_in_source_repo: True
+    cd_component: 'homeServer'
+    cd_git_url: "{{ local_repo | default('https://bitbucket.org/bferguso/')}}"
+    cd_git_username: "bferguso"
+    #cd_git_password: "{{ git_password }}"
+    cd_git_password: "f0rD3vT3am!"
+    cd_common_repo: "common-server"
+    cd_common_version: "main"
+    cd_repo: "common-server"
+    cd_version: "main"
+
+  roles:
+    # prepare the installation environment by creating the necessary folders
+    - name: cd-prepare
+
+#    # create a self signed certificate to allow for HTTPS
+#    - name: self-signed-cert
+#      when: skip_container_deploy is not defined
+
+    # deploy the homeServer webapp
+    - name: webapp
+      vars:
+        psql_config:
+           database: "homeauto"
+           user:     "homeauto"
+           password: "{{ postgres_password }}"
+
+#  tasks:
+#    - name: "Debug directory structure"
+#      find:
+#        paths:  "{{ webapp_tomcat_webapps_dir }}/{{ webapp_app_dir_name }}"
+#        recurse: yes
+#      become: yes
+#      become_user: "{{ install_user }}"
+#      register: files
+#

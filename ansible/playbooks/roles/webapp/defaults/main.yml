@@ -1,0 +1,15 @@
+#git_url:  "{{ cd_git_url }}"
+#git_user: "{{cd_git_username}}"
+#git_password: "{{cd_git_password}}"
+
+webapp_log_dir:                   "{{ cd_app_logs }}"
+webapp_log_level:                 'INFO'
+webapp_root_log_level:            'INFO'
+webapp_loggers:                   []
+
+webapp_component:                 "{{ cd_component }}"
+
+webapp_staging_dir:               "{{ cd_app_home }}/stage"
+
+webapp_user:                      "{{ install_user | default('www-data') }}"
+

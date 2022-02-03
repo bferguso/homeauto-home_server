@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <title>Ferginzeys' Home - Main Menu</title>
+    <!-- Latest compiled and minified CSS -->
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.min.css') }}">
+    <!-- Optional theme -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap-theme.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/ferginzey.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/Chart.min.css') }}"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/fa-all.min.css') }}"/>
+
+    {% if home_data.refresh_time != 0 %}
+    <meta http-equiv="refresh" content="{{home_data.refresh_time}}">
+    {% endif %}
+
+    <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <!-- Latest compiled and minified JavaScript -->
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/ferginzey.js') }}"></script>
+
+    <!-- ChartJS -->
+    <script src="{{ url_for('static', filename='js/Chart.bundle.min.js') }}"></script>
+
+    <script>
+        $().ready(function () {
+            var value;
+            $("div.dashboardHumidity").each(function () {
+                value = parseFloat($(this).text());
+                if (value > 55 && value < 60) {
+                    flagReading($(this), "readingWarning");
+                } else if (value >= 60) {
+                    flagReading($(this), "readingImportant");
+                }
+            });
+            $("div.dashboardTemp").each(function () {
+                value = parseFloat($(this).text());
+                if (value < 5 && value > 0) {
+                    flagReading($(this), "readingWarning");
+                } else if (value <= 0) {
+                    flagReading($(this), "readingImportant");
+                }
+            });
+
+            var warningTime = new Date();
+            warningTime.setHours(warningTime.getHours() - 1);
+            var errorTime = new Date();
+            errorTime.setDate(errorTime.getDate() - 1);
+
+            $("div.dashboardTimestamp").each(function () {
+                value = new Date($(this).text().replace(/\..*$/, ""));
+
+                if (value < warningTime && value > errorTime) {
+                    flagReading($(this), "readingWarning");
+                } else if (value < errorTime) {
+                    flagReading($(this), "readingImportant");
+                }
+            });
+            $("input[type=checkbox][name=fanController]").each(function() {
+                fanController($(this), "/state");
+            });
+        });
+
+        var flagReading = function (field, warningClass) {
+            var closestContainer = field.closest("div.dashboardItem");
+            if (!closestContainer.hasClass("outdoorReading"))
+            {
+                field.addClass(warningClass);
+                closestContainer.addClass(warningClass);
+            }
+        }
+
+        var showMessage = function(div, message) {
+            var msgDiv = $("#"+div);
+            msgDiv.hide();
+            msgDiv.text(message);
+            msgDiv.fadeIn(500, function() {
+               msgDiv.fadeOut(2000)
+            });
+        }
+
+        var activateFan = function(checkbox)
+        {
+            fanController(checkbox, $(checkbox).is(":checked") ? "/on" : "/off");
+        }
+
+        var fanController = function(checkbox, uri)
+        {
+            var remoteAddress = $(checkbox).attr("data-value");
+            $.ajax({
+                method: "GET",
+                url: "http://"+remoteAddress+uri,
+                success: function(data) {
+                    console.log("Success! "+data.pinState);
+                    $(checkbox).removeAttr("disabled");
+                    $(checkbox).prop("checked", data.pinState === 0);
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.log("Fail! "+textStatus);
+                }
+            });
+        }
+
+        var markSensorActive = function (locationName, ipAddress, icon) {
+            dashboardItem = $(icon).closest("div.dashboardItem");
+            isActive = dashboardItem.hasClass("active_True");
+            var enable_data = {
+                "location_name": locationName,
+                "ip_address": ipAddress,
+                "active": !isActive
+            };
+            $.ajax({
+                method: "POST",
+                url: "{{ url_for('mark_sensor_active') }}",
+                data: enable_data,
+                success: function (data) {
+                    console.log(data);
+                    if (data.success)
+                    {
+                        dashboardItem.removeClass(isActive ? "active_True" : "active_False");
+                        dashboardItem.addClass(isActive ? "active_False" : "active_True");
+                        if (isActive)
+                        {
+                            dashboardItem.hide();
+                        }
+                        showMessage("successMessage", "Successfully updated station state to "+(enable_data.active? "active" : "inactive"));
+                    }
+                    else
+                    {
+                        showMessage("errorMessage", "Unable to update station state "+data.message);
+                    }
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.log("Ajax call failed: " + textStatus + ": " + errorThrown);
+                    showMessage("errorMessage", "Unable to update station state: "+textStatus + ": " + errorThrown);
+                }
+            });
+        }
+
+        var toggleConfigVisibility = function(configDivId) {
+            toggleVisibility(configDivId);
+            var configDiv = $("#"+configDivId);
+            configDiv.find("input[type=text]").prop("disabled", true);
+            if (configDiv.is(":visible"))
+            {
+                var ipAddress = configDiv.attr("data-sensor-ip");
+                console.log("Getting config values from "+ipAddress+"...");
+                $.ajax({
+                    method: "GET",
+                    url: "http://" + ipAddress + "/getConfig",
+                    success: function (msg) {
+                        console.log(msg);
+                        showMessage("successMessage", JSON.stringify(msg));
+                        updateConfigFields(configDiv, msg);
+                    },
+                    error: function (jqXHR, textStatus, errorThrown) {
+                        console.log("Ajax call failed: " + textStatus + ": " + errorThrown);
+                        showMessage("errorMessage", "Unable to update location: " + textStatus + ": " + errorThrown);
+                    }
+                });
+            }
+        }
+
+        var updateConfigFields = function(configDiv, nodeConfig) {
+            //var nodeConfig = JSON.parse(jsonString);
+            var inputField;
+            if (nodeConfig)
+            {
+                Object.keys(nodeConfig).forEach(function(key, index) {
+                    console.log(key+"=>"+nodeConfig[key]);
+                    inputField = null;
+                    if (key === "location")
+                    {
+                        console.log("Setting location");
+                        inputField = configDiv.find("input[type=text].sensorLocation");
+                    }
+                    else if (key === "sendInterval")
+                    {
+                        inputField = configDiv.find("input[type=text].sendInterval");
+                    }
+                    else if (key === "bufferEnabled" && !nodeConfig[key])
+                    {
+                        inputField = configDiv.find("input[type=text].bufferInterval");
+                    }
+                    else if (key === "bufferedReadings")
+                    {
+                        configDiv.find("div.bufferedReadings").text(nodeConfig[key]);
+                    }
+                    else if (key === "bufferInterval")
+                    {
+                        inputField = configDiv.find("input[type=text].bufferInterval");
+                    }
+                    if (inputField)
+                    {
+                        inputField.val(nodeConfig[key]);
+                        inputField.prop("disabled", false);
+                    }
+                });
+            }
+        };
+
+        var updateConfigValue = function (ipAddress, configName, textId) {
+            var configUrl = "http://" + ipAddress;
+            if (configName === "flushBuffer")
+            {
+                configUrl = configUrl + "/flushBuffer";
+            }
+            else
+            {
+                var newValue = $("#" + textId).val();
+                console.log("New location for IP "+ipAddress+": "+newValue);
+                configUrl = configUrl + "/updateConfig?" + configName + "=" + newValue;
+            }
+
+            console.log("Calling URL: "+configUrl);
+            $.ajax({
+                method: "GET",
+                url: configUrl,
+                success: function (msg) {
+                    console.log(msg);
+                    showMessage("successMessage", JSON.stringify(msg));
+                },
+                error: function (jqXHR, textStatus, errorThrown) {
+                    console.log("Ajax call failed: " + textStatus + ": " + errorThrown);
+                    showMessage("errorMessage", "Unable to update location: "+textStatus + ": " + errorThrown);
+                }
+            });
+        }
+
+        var toggleInactiveLocations = function () {
+            $("div.dashboardItem.active_False").each(function () {
+                if ($(this).is(":visible")) {
+                    $(this).hide();
+                } else {
+                    $(this).show();
+                }
+            });
+        }
+    </script>
+</head>
+<body>
+<div class="ferginzey_title">Ferginzeys' Home Data</div>
+<div class="nav_links">
+    <div class="nav_link"><a href="/homeServer/hourlySummary"><i class="fa fa-clock" title="Hourly summary"></i></a></div>
+    <div class="nav_link"><a href="/homeServer/dailySummary"><i class="fa fa-calendar-alt" title="Daily summary"></i> </a></div>
+    <div class="nav_link"><a href="/homeServer/wx"><i class="fas fa-anchor" title="Marine weather"></i></a></div>
+    <div class="nav_link"><a href="https://www.wunderground.com/forecast/ca/bowen-island" target="wu"><i class="fas fa-cloud-sun-rain" title="Bowen weather"></i></a></div>
+    {% if home_data.refresh_time != 0 %}
+        <div class="nav_link" style="float: right; font-size: medium;">(<i class="fas fa-sync" title="Auto Refresh"></i> {{ home_data.refresh_time }}
+            <a href="/homeServer"><i class="far fa-stop-circle" title="Stop Refresh"></i></a>)</div>
+    {% else %}
+        <div class="nav_link" style="float: right; font-size: medium;"><a href="/homeServer?refresh=60"><i class="fas fa-sync" title="Auto Refresh"></i></a></div>
+    {% endif %}
+</div>
+<hr>
+<div class="sectionTitle">Current Interior Readings
+    <div class="sectionToggle" style="display: inline;" title="Show/Hide inactive locations"
+         onclick="toggleInactiveLocations();"><i class="fa fa-eye-slash"></i></div>
+</div>
+<div id="successMessage" class="messageSuccess" style="display: none;"></div>
+<div id="errorMessage" class="messageError" style="display: none;"></div>
+<div class="dashboardContainer">
+    {% for location in home_data.devices %}
+    {% set ip_label = location.remote_address | replace(".","_") %}
+    <div class="dashboardItem active_{{location.node_active}}" {%if not location.node_active %} style="display: none;" {% endif %}>
+        <div style="margin-top: -5px">
+            <div class="dashboardLocation"><a href="hourlySummary?locations={{location.node_location}}">{{location.node_location}}</a>
+            </div>
+            <div class="dashboardIp">{{location.remote_address}}</div>
+        </div>
+        <div class="dashboardTemp">{{location.last_reading.temperature}}&deg;C</div>
+        <div style="margin-top: 8px; margin-bottom: 5px;">
+            <div class="dashboardHumidity">{{location.last_reading.humidity}}%</div>
+            {% if location.last_reading.pressure and location.last_reading.pressure != 0.00 %}
+            <div class="dashboardPressure">{{location.last_reading.pressure/10}} kPa</div>
+            {% endif %}
+        </div>
+        <div class="smallDarkGray">
+            <div class="smallDarkGray">{{ location.capabilities.environment_sensor }}</div>
+            {% if location.node_active and location.capabilities.makeup_fan_controller %}
+            <div class="nodeControl">Make-up Fan:
+                <input type="checkbox" name="fanController" title="Control make-up fan"
+                       data-value="{{ location.remote_address }}" onclick="activateFan(this);" disabled></div>
+            {% endif %}
+        </div>
+        <div class="smallDarkGray">
+            Last seen: <div class="dashboardTimestamp">{{location.last_seen_timestamp.strftime('%Y-%m-%d %H:%M:%S')}}</div>
+        </div>
+        {% if location.node_active %}
+            <div class="smallDarkGray">
+                <div class="smallDarkGray"><i class="fas fa-cog clickable" title="Configure device"
+                        onclick="toggleConfigVisibility('config_{{ ip_label }}_{{ location.node_location }}')"></i></div>
+                <div class="nodeControl"><i class="fa fa-eye-slash clickable" title="Disable?"
+                                            onclick="markSensorActive('{{ location.node_location }}', '{{ location.remote_address }}', this);"></i>
+                </div>
+            </div>
+    <div id="config_{{ ip_label }}_{{ location.node_location }}" class="configControls"
+         data-sensor-ip="{{ location.remote_address }}" style="display: none;">
+        <hr style="border-bottom: 5px;">
+        <div>
+            <label for="sensorLocationText_{{ ip_label }}" class="configLabel">Name</label>
+            <input id="sensorLocationText_{{ ip_label }}" class="sensorLocation" type="text"
+                   value="{{ location.node_location }}" size="15"/>
+            <span><i class="fas fa-sync clickable"
+                     onclick="updateConfigValue('{{ location.remote_address }}', 'physicalLocation', 'sensorLocationText_{{ ip_label }}');"></i></span>
+        </div>
+        <div>
+            <label for="sensorBufferedReadings_{{ ip_label }}" class="configLabel">Buffered</label>
+            <div class="bufferedReadings" style="display: inline-block"></div>
+            <span> <i class="fas fa-sync clickable"
+                      onclick="updateConfigValue('{{ location.remote_address }}', 'flushBuffer', '');"
+                      title="Flush buffer"></i></span>
+        </div>
+        <div>
+            <label for="sensorSendInterval_{{ ip_label }}" class="configLabel">Send</label>
+            <input id="sensorSendInterval_{{ ip_label }}" class="sendInterval" type="text" value="0" size="10"/>
+            <span>(ms) <i class="fas fa-sync clickable"
+                         onclick="updateConfigValue('{{ location.remote_address }}', 'sendInterval', 'sensorSendInterval_{{ ip_label }}');"></i></span>
+        </div>
+        <div>
+            <label for="sensorBufferInterval_{{ ip_label }}" class="configLabel">Buffer</label>
+            <input id="sensorBufferInterval_{{ ip_label }}" class="bufferInterval" type="text" value="0" size="10"/>
+            <span>(ms) <i class="fas fa-sync clickable"
+                         onclick="updateConfigValue('{{ location.remote_address }}', 'bufferInterval', 'sensorBufferInterval_{{ ip_label }}');"></i></span>
+        </div>
+        <!--div>
+        <input id="publishHost_{{location.remote_address}}" type="text" value="{{location.remote_address}}"/>
+    </div>
+    <div>
+        <input id="publishUrl_{{location.remote_address}}" type="text" size="30" value="/homeServer/logEnv?envJson="/>
+    </div-->
+</div>
+{% endif %}
+</div>
+{% endfor %}
+</div>
+<hr>
+    <div class="dashboardItem active_True outdoorReading">
+        <div style="margin-top: -5px">
+            <div class="dashboardLocation">Outdoor</div>
+        </div>
+        <div class="dashboardTemp">{{home_data.tempest.obs[0].air_temperature}}&deg;C</div>
+        <div style="margin-top: 8px; margin-bottom: 5px;">
+            <div class="dashboardHumidity">{{home_data.tempest.obs[0].relative_humidity}}%</div>
+            <div class="dashboardPressure">{{home_data.tempest.obs[0].sea_level_pressure}} hPa</div>
+        </div>
+        <div class="smallDarkGray">
+            <div class="smallDarkGray">Precip (now/1h/day): {{ home_data.tempest.obs[0].precip | round(4) }} / {{ home_data.tempest.obs[0].precip_accum_last_1hr | round(2) }} / {{ home_data.tempest.obs[0].precip_accum_local_day | round(2) }}</div>
+        </div>
+        <div class="smallDarkGray">
+            <div class="smallDarkGray">Wind (avg/gust): {{ home_data.tempest.obs[0].wind_avg }} / {{ home_data.tempest.obs[0].wind_gust }} @ {{ home_data.tempest.obs[0].wind_direction }}&deg;</div>
+        </div>
+    </div>
+</body>
+</html>
