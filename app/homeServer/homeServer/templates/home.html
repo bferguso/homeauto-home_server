@@ -276,6 +276,16 @@
             <div class="dashboardPressure">{{location.last_reading.pressure/10}} kPa</div>
             {% endif %}
         </div>
+        {% if location.last_reading.voc or location.last_reading.co2 %}
+        <div style="margin-top: 0px; margin-bottom: 5px;">
+            {% if location.last_reading.voc %}
+                <div class="dashboardVoc">{{location.last_reading.voc}} voc</div>
+            {% endif %}
+            {% if location.last_reading.co2 %}
+                <div class="dashboardCo2">{{location.last_reading.co2}} co2</div>
+            {% endif %}
+        </div>
+        {% endif %}
         <div class="smallDarkGray">
             <div class="smallDarkGray">{{ location.capabilities.environment_sensor }}</div>
             {% if location.node_active and location.capabilities.makeup_fan_controller %}

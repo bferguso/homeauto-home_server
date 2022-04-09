@@ -85,6 +85,8 @@ class HomeServerDao:
                    temperature,
                    humidity, 
                    pressure,
+                   voc,
+                   co2,
                    sample_timestamp 
             from ha_environment_log
             where node_location = %(location)s 
