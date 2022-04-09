@@ -58,12 +58,14 @@ class HomeServerDao:
                 pressure = env_data['pressure'] if 'pressure' in env_data else 0.00
                 alt = env_data['alt'] if 'alt' in env_data else 0.00
                 heatIndex = env_data['heatIndex'] if 'heatIndex' in env_data else 0.00
+                voc = env_data['voc'] if 'voc' in env_data else None
+                co2 = env_data['co2'] if 'co2' in env_data else None
                 if 'sample_timestamp' not in env_data or not env_data['sample_timestamp']:
-                    cur.execute("insert into ha_environment_log(node_location,temperature,humidity, pressure, altitude, heat_index) values (%s, %s, %s, %s, %s, %s);"
-                            , (env_data['location'], env_data['temp'], env_data['humidity'], pressure, alt, heatIndex))
+                    cur.execute("insert into ha_environment_log(node_location,temperature,humidity, pressure, altitude, heat_index, voc, co2) values (%s, %s, %s, %s, %s, %s, %s, %s);"
+                            , (env_data['location'], env_data['temp'], env_data['humidity'], pressure, alt, heatIndex, voc, co2))
                 else:
-                    cur.execute("insert into ha_environment_log(node_location,temperature,humidity, pressure, altitude, heat_index, sample_timestamp) values (%s, %s, %s, %s, %s, %s, %s);"
-                            , (env_data['location'], env_data['temp'], env_data['humidity'], pressure, alt, heatIndex, env_data['sample_timestamp']))
+                    cur.execute("insert into ha_environment_log(node_location,temperature,humidity, pressure, altitude, heat_index, voc, co2, sample_timestamp) values (%s, %s, %s, %s, %s, %s, %s, %s, %s);"
+                            , (env_data['location'], env_data['temp'], env_data['humidity'], pressure, alt, heatIndex, voc, co2, env_data['sample_timestamp']))
                 self.__log_device_seen(cur, env_data)
 
     def get_last_seen_devices(self):
