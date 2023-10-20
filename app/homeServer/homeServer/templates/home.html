@@ -346,6 +346,7 @@
 {% endfor %}
 </div>
 <hr>
+{% if home_data.tempest.obs %}
     <div class="dashboardItem active_True outdoorReading">
         <div style="margin-top: -5px">
             <div class="dashboardLocation">Outdoor</div>
@@ -362,5 +363,11 @@
             <div class="smallDarkGray">Wind (avg/gust): {{ home_data.tempest.obs[0].wind_avg }} / {{ home_data.tempest.obs[0].wind_gust }} @ {{ home_data.tempest.obs[0].wind_direction }}&deg;</div>
         </div>
     </div>
+{% endif %}
+{% if not home_data.tempest.obs %}
+    <div class="dashboardItem active_True outdoorReading">
+        Tempest station offline
+    </div>
+{% endif %}
 </body>
 </html>
